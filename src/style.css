@@ -6,8 +6,8 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
   width: 100%;
+  min-height: 100%;
 }
 
 body {
@@ -17,8 +17,13 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  background: #101114;
-  color: #ffffff;
+
+  background: #0f1014;
+  color: #fff;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 button {
@@ -27,14 +32,15 @@ button {
 
 .app {
   min-height: 100vh;
+  padding: 24px;
+
   background:
     radial-gradient(
-      circle at top,
-      #252831 0%,
-      #15171c 42%,
-      #101114 100%
+      circle at 50% -10%,
+      #2b303b 0%,
+      #17191f 42%,
+      #0f1014 100%
     );
-  padding: 24px;
 }
 
 .topbar {
@@ -50,29 +56,36 @@ button {
 .logo {
   font-size: 28px;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .subtitle {
-  margin-top: 4px;
-  color: #9297a3;
+  margin-top: 5px;
+
+  color: #858b97;
   font-size: 14px;
 }
 
 .level {
-  padding: 10px 14px;
+  padding: 10px 15px;
+
   border-radius: 12px;
+
   background: rgba(255, 255, 255, 0.08);
-  color: #aeb3bd;
+
+  color: #9da3ae;
+
   font-size: 12px;
   font-weight: 700;
+
   white-space: nowrap;
 }
 
 .level strong {
-  color: white;
-  font-size: 16px;
   margin-left: 5px;
+
+  color: #fff;
+  font-size: 17px;
 }
 
 .game {
@@ -84,65 +97,129 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   margin-bottom: 14px;
 
-  color: #9da2ad;
+  color: #969ca7;
   font-size: 14px;
 }
 
-.info strong {
-  color: white;
+.stats {
+  display: flex;
+  gap: 18px;
+}
+
+.stats strong {
+  color: #fff;
 }
 
 .info button {
-  border: 0;
-  border-radius: 10px;
   padding: 8px 14px;
 
-  color: white;
+  border: 0;
+  border-radius: 10px;
+
   background: #292d35;
+  color: #fff;
 
   cursor: pointer;
-  transition: 0.2s ease;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .info button:hover {
   background: #353a44;
 }
 
+.info button:active {
+  transform: scale(0.95);
+}
+
 .board {
+  position: relative;
+
   width: min(650px, 100%);
   aspect-ratio: 1 / 1;
+
   margin: 0 auto;
 
   display: grid;
 
-  padding: 10px;
-  gap: 5px;
+  padding: 9px;
+  gap: 4px;
 
   border-radius: 24px;
 
   background: #252830;
 
   box-shadow:
-    0 25px 70px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  overflow: hidden;
+
+  touch-action: none;
+}
+
+.lines {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 5;
+
+  pointer-events: none;
+
+  overflow: visible;
+}
+
+.connection-line {
+  fill: none;
+
+  stroke-width: 7;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  filter:
+    drop-shadow(0 0 4px currentColor)
+    drop-shadow(0 0 8px currentColor);
+}
+
+.active-line {
+  opacity: 0.8;
+
+  stroke-width: 7;
 }
 
 .cell {
   position: relative;
+
+  z-index: 10;
+
+  min-width: 0;
+  min-height: 0;
 
   border: 0;
   border-radius: 10px;
 
   background: #17191e;
 
-  cursor: pointer;
+  cursor: crosshair;
+
+  padding: 0;
+
+  touch-action: none;
 
   transition:
-    background 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    background 0.12s ease,
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .cell:hover {
@@ -150,60 +227,59 @@ button {
 }
 
 .cell:active {
-  transform: scale(0.94);
+  transform: scale(0.96);
+}
+
+.cell.active {
+  background: #22262e;
+}
+
+.cell.connected {
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .cell.endpoint {
   background: #1b1e24;
 }
 
-.cell.selected {
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.8),
-    0 0 20px var(--dot-color);
-}
-
 .dot {
   position: absolute;
+
+  left: 50%;
+  top: 50%;
 
   width: 42%;
   aspect-ratio: 1 / 1;
 
-  top: 50%;
-  left: 50%;
-
   transform: translate(-50%, -50%);
 
   border-radius: 50%;
 
   box-shadow:
-    0 0 12px var(--dot-color),
-    0 0 25px var(--dot-color);
+    0 0 10px var(--dot-color),
+    0 0 22px var(--dot-color),
+    0 0 38px rgba(255, 255, 255, 0.08);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.cell.connected::after {
-  content: "";
+.cell.endpoint:hover .dot,
+.cell.endpoint:active .dot {
+  transform: translate(-50%, -50%) scale(1.12);
+}
 
-  position: absolute;
-
-  width: 16%;
-  height: 16%;
-
-  top: 50%;
-  left: 50%;
-
-  transform: translate(-50%, -50%);
-
-  border-radius: 50%;
-
-  background: white;
-
-  opacity: 0.85;
+.cell.connected .dot {
+  box-shadow:
+    0 0 12px var(--dot-color),
+    0 0 28px var(--dot-color);
 }
 
 .hint {
-  text-align: center;
   margin-top: 18px;
+
+  text-align: center;
 
   color: #777d88;
   font-size: 14px;
@@ -218,6 +294,7 @@ button {
   border-radius: 18px;
 
   background: rgba(107, 203, 119, 0.1);
+
   border: 1px solid rgba(107, 203, 119, 0.25);
 }
 
@@ -228,6 +305,7 @@ button {
 
 .success-text {
   margin-top: 6px;
+
   color: #969ca6;
   font-size: 14px;
 }
@@ -235,13 +313,13 @@ button {
 .next {
   margin-top: 16px;
 
+  padding: 12px 22px;
+
   border: 0;
   border-radius: 12px;
 
-  padding: 12px 20px;
-
+  background: #fff;
   color: #101114;
-  background: #ffffff;
 
   font-weight: 800;
 
@@ -257,6 +335,10 @@ button {
   opacity: 0.9;
 }
 
+.next:active {
+  transform: scale(0.97);
+}
+
 @media (max-width: 600px) {
   .app {
     padding: 14px;
@@ -268,6 +350,7 @@ button {
 
   .logo {
     font-size: 22px;
+    letter-spacing: 2px;
   }
 
   .subtitle {
@@ -290,5 +373,17 @@ button {
 
   .dot {
     width: 45%;
+  }
+
+  .connection-line {
+    stroke-width: 8;
+  }
+
+  .active-line {
+    stroke-width: 8;
+  }
+
+  .hint {
+    font-size: 13px;
   }
 }
