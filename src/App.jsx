@@ -1,554 +1,452 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const LEVELS = [
   {
-    pairs: [
-      { color: "#ff5c5c", a: [14, 18], b: [84, 78] },
-      { color: "#4d96ff", a: [84, 18], b: [16, 78] },
-      { color: "#ffd93d", a: [50, 12], b: [50, 88] },
-      { color: "#6bcb77", a: [12, 50], b: [88, 50] },
+    size: 5,
+    paths: [
+      [18, 13, 8, 7, 6, 11, 16],
+      [1, 2, 3, 4, 9, 14],
+      [19, 24, 23, 22, 17, 12],
+      [21, 20, 15, 10, 5, 0],
     ],
   },
   {
-    pairs: [
-      { color: "#ff5c5c", a: [12, 18], b: [86, 78] },
-      { color: "#4d96ff", a: [86, 18], b: [14, 82] },
-      { color: "#ffd93d", a: [48, 12], b: [50, 88] },
-      { color: "#6bcb77", a: [12, 50], b: [88, 50] },
-      { color: "#a66cff", a: [28, 88], b: [72, 12] },
+    size: 6,
+    paths: [
+      [30, 24, 25, 26, 20, 14, 13, 19],
+      [17, 23, 22, 16, 15, 21, 27],
+      [4, 5, 11, 10, 9, 8, 7],
+      [18, 12, 6, 0, 1, 2, 3],
+      [28, 29, 35, 34, 33, 32, 31],
     ],
   },
   {
-    pairs: [
-      { color: "#ff5c5c", a: [10, 16], b: [90, 84] },
-      { color: "#4d96ff", a: [90, 16], b: [10, 84] },
-      { color: "#ffd93d", a: [50, 8], b: [50, 92] },
-      { color: "#6bcb77", a: [8, 50], b: [92, 50] },
-      { color: "#a66cff", a: [24, 28], b: [76, 72] },
-      { color: "#ff8fab", a: [76, 28], b: [24, 72] },
+    size: 7,
+    paths: [
+      [27, 26, 25, 18, 11, 12, 19, 20, 13],
+      [44, 37, 30, 29, 36, 43, 42, 35, 28],
+      [6, 5, 4, 3, 10, 9, 16, 15, 8],
+      [17, 24, 31, 32, 33, 34, 41, 40, 39],
+      [23, 22, 21, 14, 7, 0, 1, 2],
+      [48, 47, 46, 45, 38],
     ],
   },
 ];
 
-const DOT_RADIUS = 6;
-const LINE_WIDTH = 2.8;
-const SAMPLE_DISTANCE = 1.5;
-const COLLISION_DISTANCE = 4.2;
-
-function distance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function pointToSegmentDistance(point, a, b) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-
-  const lengthSquared = dx * dx + dy * dy;
-
-  if (lengthSquared === 0) {
-    return distance(point, a);
-  }
-
-  let t =
-    ((point.x - a.x) * dx +
-      (point.y - a.y) * dy) /
-    lengthSquared;
-
-  t = Math.max(0, Math.min(1, t));
-
-  return distance(point, {
-    x: a.x + t * dx,
-    y: a.y + t * dy,
-  });
-}
-
-function segmentsIntersect(a, b, c, d) {
-  function orientation(p, q, r) {
-    const value =
-      (q.y - p.y) * (r.x - q.x) -
-      (q.x - p.x) * (r.y - q.y);
-
-    if (Math.abs(value) < 0.0001) return 0;
-
-    return value > 0 ? 1 : 2;
-  }
-
-  function onSegment(p, q, r) {
-    return (
-      q.x <= Math.max(p.x, r.x) + 0.001 &&
-      q.x >= Math.min(p.x, r.x) - 0.001 &&
-      q.y <= Math.max(p.y, r.y) + 0.001 &&
-      q.y >= Math.min(p.y, r.y) - 0.001
-    );
-  }
-
-  const o1 = orientation(a, b, c);
-  const o2 = orientation(a, b, d);
-  const o3 = orientation(c, d, a);
-  const o4 = orientation(c, d, b);
-
-  if (o1 !== o2 && o3 !== o4) {
-    return true;
-  }
-
-  if (o1 === 0 && onSegment(a, c, b)) return true;
-  if (o2 === 0 && onSegment(a, d, b)) return true;
-  if (o3 === 0 && onSegment(c, a, d)) return true;
-  if (o4 === 0 && onSegment(c, b, d)) return true;
-
-  return false;
-}
-
-function segmentsTooClose(a, b, c, d) {
-  if (segmentsIntersect(a, b, c, d)) {
-    return true;
-  }
-
-  return (
-    pointToSegmentDistance(a, c, d) <
-      COLLISION_DISTANCE ||
-    pointToSegmentDistance(b, c, d) <
-      COLLISION_DISTANCE ||
-    pointToSegmentDistance(c, a, b) <
-      COLLISION_DISTANCE ||
-    pointToSegmentDistance(d, a, b) <
-      COLLISION_DISTANCE
-  );
-}
+const COLORS = [
+  "#ff5c5c",
+  "#4d96ff",
+  "#ffd93d",
+  "#6bcb77",
+  "#a66cff",
+  "#ff8fab",
+];
 
 function App() {
   const [level, setLevel] = useState(0);
-  const [lines, setLines] = useState([]);
-  const [activeLine, setActiveLine] = useState(null);
-  const [message, setMessage] = useState(
-    "Зажми точку и веди линию"
-  );
+  const [connections, setConnections] = useState([]);
+  const [activePath, setActivePath] = useState(null);
+  const [dragging, setDragging] = useState(false);
 
   const boardRef = useRef(null);
+  const cellRefs = useRef({});
 
   const current = LEVELS[level];
+  const totalPairs = current.paths.length;
+  const totalCells = current.size * current.size;
 
-  function getPosition(event) {
+  const usedCells = connections.reduce(
+    (sum, path) => sum + path.length,
+    0
+  );
+
+  const endpointToPair = new Map();
+
+  current.paths.forEach((path, pairIndex) => {
+    endpointToPair.set(path[0], pairIndex);
+    endpointToPair.set(path[path.length - 1], pairIndex);
+  });
+
+  function isEndpoint(cell) {
+    return endpointToPair.has(cell);
+  }
+
+  function getColor(cell) {
+    const pairIndex = endpointToPair.get(cell);
+    return COLORS[pairIndex % COLORS.length];
+  }
+
+  function isOccupied(cell) {
+    return connections.some((path) => path.includes(cell));
+  }
+
+  function areAdjacent(a, b) {
+    const ar = Math.floor(a / current.size);
+    const ac = a % current.size;
+
+    const br = Math.floor(b / current.size);
+    const bc = b % current.size;
+
+    return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
+  }
+
+  function pointForCell(cell) {
     const board = boardRef.current;
+    const element = cellRefs.current[cell];
 
-    if (!board) return null;
+    if (!board || !element) return null;
 
-    const rect = board.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
 
     return {
       x:
-        ((event.clientX - rect.left) /
-          rect.width) *
+        ((cellRect.left +
+          cellRect.width / 2 -
+          boardRect.left) /
+          boardRect.width) *
         100,
 
       y:
-        ((event.clientY - rect.top) /
-          rect.height) *
+        ((cellRect.top +
+          cellRect.height / 2 -
+          boardRect.top) /
+          boardRect.height) *
         100,
     };
   }
 
-  function findDot(point) {
-    for (
-      let pairIndex = 0;
-      pairIndex < current.pairs.length;
-      pairIndex++
+  function pathPoints(path) {
+    return path
+      .map(pointForCell)
+      .filter(Boolean)
+      .map((point) => `${point.x},${point.y}`)
+      .join(" ");
+  }
+
+  function startPath(cell) {
+    if (!isEndpoint(cell)) return;
+
+    if (isOccupied(cell)) return;
+
+    setActivePath([cell]);
+    setDragging(true);
+  }
+
+  function movePath(cell) {
+    if (!dragging || !activePath) return;
+
+    const last = activePath[activePath.length - 1];
+
+    if (cell === last) return;
+
+    // Движение назад — убираем последнюю клетку.
+    if (
+      activePath.length > 1 &&
+      cell === activePath[activePath.length - 2]
     ) {
-      const pair = current.pairs[pairIndex];
+      setActivePath(activePath.slice(0, -1));
+      return;
+    }
 
-      const distanceA = distance(point, {
-        x: pair.a[0],
-        y: pair.a[1],
-      });
+    // Только соседняя клетка.
+    if (!areAdjacent(last, cell)) return;
 
-      if (distanceA <= DOT_RADIUS) {
-        return {
-          pairIndex,
-          side: "a",
-        };
-      }
+    // Нельзя проходить через уже занятую клетку.
+    if (isOccupied(cell)) return;
 
-      const distanceB = distance(point, {
-        x: pair.b[0],
-        y: pair.b[1],
-      });
+    // Нельзя заходить в чужую точку.
+    if (isEndpoint(cell)) {
+      const pairIndex = endpointToPair.get(activePath[0]);
 
-      if (distanceB <= DOT_RADIUS) {
-        return {
-          pairIndex,
-          side: "b",
-        };
+      if (endpointToPair.get(cell) !== pairIndex) {
+        return;
       }
     }
 
-    return null;
+    // Нельзя замыкать линию на саму себя.
+    if (activePath.includes(cell)) return;
+
+    setActivePath([...activePath, cell]);
   }
 
-  function lineHitsExistingLines(points) {
-    if (points.length < 2) {
-      return false;
-    }
+  function moveFromPointer(event) {
+    if (!dragging) return;
 
-    const a = points[points.length - 2];
-    const b = points[points.length - 1];
-
-    for (const line of lines) {
-      for (
-        let i = 1;
-        i < line.points.length;
-        i++
-      ) {
-        const c = line.points[i - 1];
-        const d = line.points[i];
-
-        if (segmentsTooClose(a, b, c, d)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  function lineHitsOtherDots(points, pairIndex) {
-    if (points.length < 2) {
-      return false;
-    }
-
-    const point = points[points.length - 1];
-
-    for (
-      let index = 0;
-      index < current.pairs.length;
-      index++
-    ) {
-      if (index === pairIndex) continue;
-
-      const pair = current.pairs[index];
-
-      if (
-        distance(point, {
-          x: pair.a[0],
-          y: pair.a[1],
-        }) <
-        DOT_RADIUS + 2
-      ) {
-        return true;
-      }
-
-      if (
-        distance(point, {
-          x: pair.b[0],
-          y: pair.b[1],
-        }) <
-        DOT_RADIUS + 2
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function startLine(event) {
-    const point = getPosition(event);
-
-    if (!point) return;
-
-    const dot = findDot(point);
-
-    if (!dot) return;
-
-    const alreadyConnected = lines.some(
-      (line) => line.pairIndex === dot.pairIndex
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
     );
 
-    if (alreadyConnected) return;
+    const cellElement = element?.closest(".cell");
 
+    if (!cellElement) return;
+
+    const cell = Number(cellElement.dataset.cell);
+
+    if (!Number.isNaN(cell)) {
+      movePath(cell);
+    }
+  }
+
+  function finishPath(cell) {
+    if (!dragging || !activePath) return;
+
+    const pairIndex = endpointToPair.get(activePath[0]);
+
+    const target =
+      current.paths[pairIndex][0] === activePath[0]
+        ? current.paths[pairIndex][current.paths[pairIndex].length - 1]
+        : current.paths[pairIndex][0];
+
+    if (cell === target && activePath.length >= 2) {
+      setConnections([...connections, activePath]);
+    }
+
+    setActivePath(null);
+    setDragging(false);
+  }
+
+  function handlePointerDown(event, cell) {
     event.preventDefault();
 
     event.currentTarget.setPointerCapture?.(
       event.pointerId
     );
 
-    setActiveLine({
-      pairIndex: dot.pairIndex,
-      startSide: dot.side,
-      points: [point],
-    });
-
-    setMessage("Веди линию к точке такого же цвета");
+    startPath(cell);
   }
 
-  function moveLine(event) {
-    if (!activeLine) return;
+  function handlePointerMove(event) {
+    if (!dragging) return;
 
     event.preventDefault();
-
-    const point = getPosition(event);
-
-    if (!point) return;
-
-    const last =
-      activeLine.points[
-        activeLine.points.length - 1
-      ];
-
-    if (
-      distance(point, last) <
-      SAMPLE_DISTANCE
-    ) {
-      return;
-    }
-
-    const nextPoints = [
-      ...activeLine.points,
-      point,
-    ];
-
-    if (
-      lineHitsExistingLines(nextPoints) ||
-      lineHitsOtherDots(
-        nextPoints,
-        activeLine.pairIndex
-      )
-    ) {
-      setMessage(
-        "Нельзя пересекать другие линии"
-      );
-      return;
-    }
-
-    setActiveLine({
-      ...activeLine,
-      points: nextPoints,
-    });
+    moveFromPointer(event);
   }
 
-  function finishLine(event) {
-    if (!activeLine) return;
-
+  function handlePointerUp(event) {
     event.preventDefault();
 
-    const point = getPosition(event);
-
-    if (!point) {
-      cancelLine();
-      return;
-    }
-
-    const pair =
-      current.pairs[activeLine.pairIndex];
-
-    const target =
-      activeLine.startSide === "a"
-        ? pair.b
-        : pair.a;
-
-    const targetDistance = distance(point, {
-      x: target[0],
-      y: target[1],
-    });
-
-    if (targetDistance <= DOT_RADIUS) {
-      const finalPoints = [
-        ...activeLine.points,
-        {
-          x: target[0],
-          y: target[1],
-        },
-      ];
-
-      if (
-        !lineHitsExistingLines(finalPoints)
-      ) {
-        setLines([
-          ...lines,
-          {
-            pairIndex:
-              activeLine.pairIndex,
-            color: pair.color,
-            points: finalPoints,
-          },
-        ]);
-
-        setMessage(
-          "Соединено. Выбери следующую пару"
-        );
-      } else {
-        setMessage(
-          "Нельзя пересекать другую линию"
-        );
-      }
-    } else {
-      setMessage(
-        "Не попал в точку — попробуй ещё раз"
-      );
-    }
-
-    setActiveLine(null);
-  }
-
-  function cancelLine() {
-    setActiveLine(null);
-
-    setMessage(
-      "Попробуй провести линию другим маршрутом"
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
     );
+
+    const cellElement = element?.closest(".cell");
+
+    if (cellElement) {
+      const cell = Number(cellElement.dataset.cell);
+
+      if (!Number.isNaN(cell)) {
+        finishPath(cell);
+        return;
+      }
+    }
+
+    setActivePath(null);
+    setDragging(false);
   }
+
+  useEffect(() => {
+    function handleWindowPointerUp() {
+      if (dragging) {
+        setActivePath(null);
+        setDragging(false);
+      }
+    }
+
+    window.addEventListener(
+      "pointerup",
+      handleWindowPointerUp
+    );
+
+    return () => {
+      window.removeEventListener(
+        "pointerup",
+        handleWindowPointerUp
+      );
+    };
+  }, [dragging]);
 
   function resetLevel() {
-    setLines([]);
-    setActiveLine(null);
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
+  }
 
-    setMessage(
-      "Зажми точку и веди линию"
-    );
+  function undoLastMove() {
+    if (connections.length === 0 || dragging) return;
+
+    setConnections((previous) => previous.slice(0, -1));
   }
 
   function nextLevel() {
     setLevel(
-      (value) =>
-        (value + 1) % LEVELS.length
+      (previous) => (previous + 1) % LEVELS.length
     );
 
-    setLines([]);
-    setActiveLine(null);
-
-    setMessage(
-      "Зажми точку и веди линию"
-    );
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
   }
 
   const completed =
-    lines.length ===
-    current.pairs.length;
+    connections.length === totalPairs &&
+    usedCells === totalCells;
 
-  function pointsToString(points) {
-    return points
-      .map(
-        (point) =>
-          `${point.x},${point.y}`
-      )
-      .join(" ");
-  }
+  const progress = Math.round(
+    (usedCells / totalCells) * 100
+  );
 
   return (
     <div className="app">
       <header className="topbar">
         <div>
-          <div className="logo">
-            СОЕДИНИ
-          </div>
+          <div className="logo">СОЕДИНИ</div>
 
           <div className="subtitle">
-            Соедини точки, не пересекая линии
+            Проведи каждую линию от точки до точки
           </div>
         </div>
 
         <div className="level">
-          УРОВЕНЬ{" "}
-          <strong>{level + 1}</strong>
+          УРОВЕНЬ <strong>{level + 1}</strong>
         </div>
       </header>
 
       <main className="game">
         <div className="info">
-          <span>
-            Соединено{" "}
-            <strong>
-              {lines.length}
-            </strong>{" "}
-            / {current.pairs.length}
-          </span>
+          <div className="stats">
+            <span>
+              Линии{" "}
+              <strong>{connections.length}</strong>/
+              {totalPairs}
+            </span>
 
-          <button
-            onClick={resetLevel}
-          >
-            Заново
-          </button>
+            <span>
+              Поле <strong>{progress}%</strong>
+            </span>
+          </div>
+
+          <div className="controls">
+            <button
+              onClick={undoLastMove}
+              disabled={connections.length === 0 || dragging}
+            >
+              ← Назад
+            </button>
+
+            <button onClick={resetLevel}>
+              Заново
+            </button>
+          </div>
         </div>
 
         <div
           ref={boardRef}
           className="board"
-          onPointerDown={startLine}
-          onPointerMove={moveLine}
-          onPointerUp={finishLine}
-          onPointerCancel={cancelLine}
+          style={{
+            gridTemplateColumns: `repeat(${current.size}, 1fr)`,
+            gridTemplateRows: `repeat(${current.size}, 1fr)`,
+          }}
+          onPointerMove={handlePointerMove}
         >
           <svg
             className="lines"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            {lines.map((line) => (
+            {connections.map((path, index) => (
               <polyline
-                key={line.pairIndex}
-                points={pointsToString(
-                  line.points
-                )}
+                key={`line-${index}`}
+                points={pathPoints(path)}
                 className="connection-line"
-                stroke={line.color}
+                stroke={
+                  COLORS[index % COLORS.length]
+                }
               />
             ))}
 
-            {activeLine && (
+            {activePath && (
               <polyline
-                points={pointsToString(
-                  activeLine.points
-                )}
+                points={pathPoints(activePath)}
                 className="connection-line active-line"
-                stroke={
-                  current.pairs[
-                    activeLine.pairIndex
-                  ].color
-                }
+                stroke={getColor(activePath[0])}
               />
             )}
           </svg>
 
-          {current.pairs.map(
-            (pair, pairIndex) => (
-              <div
-                key={pairIndex}
-              >
-                <span
-                  className="dot"
-                  style={{
-                    left: `${pair.a[0]}%`,
-                    top: `${pair.a[1]}%`,
-                    backgroundColor:
-                      pair.color,
-                    "--dot-color":
-                      pair.color,
-                  }}
-                />
+          {Array.from({
+            length: totalCells,
+          }).map((_, index) => {
+            const endpoint = isEndpoint(index);
+            const connected = connections.some(
+              (path) => path.includes(index)
+            );
 
-                <span
-                  className="dot"
-                  style={{
-                    left: `${pair.b[0]}%`,
-                    top: `${pair.b[1]}%`,
-                    backgroundColor:
-                      pair.color,
-                    "--dot-color":
-                      pair.color,
-                  }}
-                />
-              </div>
-            )
-          )}
+            const active =
+              activePath?.includes(index);
+
+            const color = endpoint
+              ? getColor(index)
+              : null;
+
+            return (
+              <button
+                key={index}
+                ref={(element) => {
+                  if (element) {
+                    cellRefs.current[index] =
+                      element;
+                  }
+                }}
+                data-cell={index}
+                className={`cell ${
+                  endpoint ? "endpoint" : ""
+                } ${
+                  connected ? "connected" : ""
+                } ${
+                  active ? "active" : ""
+                }`}
+                onPointerDown={(event) =>
+                  handlePointerDown(
+                    event,
+                    index
+                  )
+                }
+                onPointerUp={handlePointerUp}
+                style={
+                  endpoint
+                    ? {
+                        "--dot-color": color,
+                      }
+                    : undefined
+                }
+                aria-label={`Клетка ${
+                  index + 1
+                }`}
+              >
+                {endpoint && (
+                  <span
+                    className="dot"
+                    style={{
+                      backgroundColor: color,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {completed ? (
+        {completed && (
           <div className="success">
             <div className="success-title">
               Уровень пройден
             </div>
 
             <div className="success-text">
-              Все пары соединены без пересечений
+              Поле заполнено. Все пары соединены.
             </div>
 
             <button
@@ -558,9 +456,11 @@ function App() {
               Следующий уровень
             </button>
           </div>
-        ) : (
+        )}
+
+        {!completed && (
           <div className="hint">
-            {message}
+            Зажми цветную точку и веди по клеткам
           </div>
         )}
       </main>
