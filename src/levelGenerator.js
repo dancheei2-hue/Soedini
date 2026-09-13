@@ -41,24 +41,38 @@ function getNeighbors(cell, size) {
 }
 
 /*
- * Создаём случайный Hamiltonian path:
+ * Создаём Hamiltonian path.
  *
- * маршрут проходит через КАЖДУЮ клетку
+ * Маршрут проходит через КАЖДУЮ клетку
  * поля ровно один раз.
  *
- * Это гарантирует, что после разрезания
- * маршрута на пары у головоломки будет
- * как минимум одно решение.
+ * Сначала пробуем случайный DFS.
+ * Если поиск не справился за ограниченное
+ * количество операций, используем
+ * гарантированный змеиный маршрут.
+ *
+ * Поэтому генератор не может зависнуть
+ * на одном уровне.
  */
 function generateHamiltonianPath(size) {
   const totalCells = size * size;
 
   /*
-   * Для больших полей несколько попыток.
-   * Если случайный DFS застрял, начинаем
-   * заново с другой стартовой клетки.
+   * Максимальное количество посещённых
+   * узлов DFS за одну попытку.
    */
-  for (let attempt = 0; attempt < 100; attempt++) {
+  const MAX_NODES = 12000;
+
+  /*
+   * Количество случайных попыток.
+   */
+  const MAX_ATTEMPTS = 8;
+
+  for (
+    let attempt = 0;
+    attempt < MAX_ATTEMPTS;
+    attempt++
+  ) {
     const start =
       Math.floor(
         Math.random() * totalCells
@@ -67,7 +81,26 @@ function generateHamiltonianPath(size) {
     const visited = new Set([start]);
     const path = [start];
 
+    let nodesVisited = 0;
+    let stopped = false;
+
     function dfs(cell) {
+      nodesVisited++;
+
+      /*
+       * Жёсткий лимит.
+       *
+       * Старый генератор мог очень долго
+       * перебирать варианты.
+       */
+      if (nodesVisited > MAX_NODES) {
+        stopped = true;
+        return false;
+      }
+
+      /*
+       * Все клетки пройдены.
+       */
       if (
         path.length === totalCells
       ) {
@@ -82,13 +115,9 @@ function generateHamiltonianPath(size) {
           );
 
       /*
-       * Правило Warnsdorff:
+       * Warnsdorff:
        * сначала пробуем клетки,
-       * у которых меньше свободных
-       * соседей.
-       *
-       * Это значительно уменьшает
-       * вероятность тупика.
+       * у которых меньше свободных соседей.
        */
       neighbors = neighbors
         .map((next) => {
@@ -97,8 +126,8 @@ function generateHamiltonianPath(size) {
               next,
               size
             ).filter(
-              (cell) =>
-                !visited.has(cell)
+              (candidate) =>
+                !visited.has(candidate)
             ).length;
 
           return {
@@ -126,6 +155,14 @@ function generateHamiltonianPath(size) {
         });
 
       for (const item of neighbors) {
+        /*
+         * Если достигли лимита,
+         * прекращаем поиск.
+         */
+        if (stopped) {
+          return false;
+        }
+
         const next = item.cell;
 
         visited.add(next);
@@ -147,7 +184,100 @@ function generateHamiltonianPath(size) {
     }
   }
 
-  return null;
+  /*
+   * ГАРАНТИРОВАННЫЙ запасной вариант.
+   *
+   * Идём по полю змейкой.
+   *
+   * Например, для 5×5:
+   *
+   *  → → → → →
+   *  ← ← ← ← ←
+   *  → → → → →
+   *  ← ← ← ← ←
+   *  → → → → →
+   *
+   * Каждая соседняя клетка маршрута
+   * действительно соприкасается с предыдущей.
+   *
+   * В результате все клетки поля
+   * посещаются ровно один раз.
+   */
+
+  const path = [];
+
+  /*
+   * Иногда используем горизонтальную змейку,
+   * иногда вертикальную.
+   */
+  const vertical =
+    Math.random() < 0.5;
+
+  if (!vertical) {
+    /*
+     * Горизонтальная змейка.
+     */
+    for (
+      let row = 0;
+      row < size;
+      row++
+    ) {
+      if (row % 2 === 0) {
+        for (
+          let col = 0;
+          col < size;
+          col++
+        ) {
+          path.push(
+            row * size + col
+          );
+        }
+      } else {
+        for (
+          let col = size - 1;
+          col >= 0;
+          col--
+        ) {
+          path.push(
+            row * size + col
+          );
+        }
+      }
+    }
+  } else {
+    /*
+     * Вертикальная змейка.
+     */
+    for (
+      let col = 0;
+      col < size;
+      col++
+    ) {
+      if (col % 2 === 0) {
+        for (
+          let row = 0;
+          row < size;
+          row++
+        ) {
+          path.push(
+            row * size + col
+          );
+        }
+      } else {
+        for (
+          let row = size - 1;
+          row >= 0;
+          row--
+        ) {
+          path.push(
+            row * size + col
+          );
+        }
+      }
+    }
+  }
+
+  return path;
 }
 
 /*
@@ -197,17 +327,17 @@ function splitPath(fullPath, pairCount) {
       minimumForRest;
 
     /*
-     * Иногда специально делаем
-     * длинные и короткие маршруты,
-     * чтобы структура была менее
-     * очевидной.
+     * Случайно выбираем длину
+     * текущего маршрута.
      */
     const length =
       Math.floor(
         Math.random() *
-          (maximumLength -
+          (
+            maximumLength -
             minimumLength +
-            1)
+            1
+          )
       ) +
       minimumLength;
 
@@ -236,16 +366,13 @@ function splitPath(fullPath, pairCount) {
 }
 
 /*
- * Проверка кандидата.
+ * Проверка созданного уровня.
  *
- * Здесь мы не ищем решение —
- * мы проверяем гарантированное
- * решение, из которого уровень
- * был создан.
+ * Здесь мы НЕ ищем решение.
+ * Мы проверяем решение,
+ * из которого уровень был создан.
  */
-function validateGeneratedLevel(
-  level
-) {
+function validateGeneratedLevel(level) {
   const {
     size,
     paths,
@@ -285,6 +412,9 @@ function validateGeneratedLevel(
     ) {
       const cell = path[i];
 
+      /*
+       * Клетка должна существовать.
+       */
       if (
         !Number.isInteger(cell) ||
         cell < 0 ||
@@ -293,12 +423,20 @@ function validateGeneratedLevel(
         return false;
       }
 
+      /*
+       * Клетка не должна повторяться
+       * в другом маршруте.
+       */
       if (used.has(cell)) {
         return false;
       }
 
       used.add(cell);
 
+      /*
+       * Соседние клетки маршрута
+       * должны быть ортогонально соседними.
+       */
       if (i > 0) {
         const previous =
           path[i - 1];
@@ -315,6 +453,10 @@ function validateGeneratedLevel(
     }
   }
 
+  /*
+   * Все клетки поля должны быть
+   * использованы.
+   */
   return (
     used.size === totalCells
   );
@@ -323,16 +465,13 @@ function validateGeneratedLevel(
 /*
  * Небольшая оценка сложности.
  *
- * Чем больше пар и чем сильнее
- * различаются длины маршрутов,
- * тем выше базовая сложность.
+ * Это пока НЕ оценка количества
+ * решений.
  *
- * Позже сюда добавим настоящую
- * оценку решателем.
+ * Настоящую сложность будем определять
+ * отдельным решателем.
  */
-function calculateDifficulty(
-  level
-) {
+function calculateDifficulty(level) {
   const {
     size,
     paths,
@@ -384,7 +523,8 @@ function calculateDifficulty(
 }
 
 /*
- * Главная функция генерации.
+ * Главная функция генерации
+ * одного уровня.
  */
 export function generateLevel({
   size = 7,
@@ -417,9 +557,8 @@ export function generateLevel({
     /*
      * Перемешиваем порядок пар.
      *
-     * Это важно: цвета на поле
-     * больше не идут в том же порядке,
-     * что и физическое расположение
+     * Это важно, чтобы цвета не были
+     * связаны с порядком расположения
      * маршрутов.
      */
     const shuffledPaths =
@@ -430,6 +569,9 @@ export function generateLevel({
       paths: shuffledPaths,
     };
 
+    /*
+     * Проверяем уровень перед возвратом.
+     */
     if (
       !validateGeneratedLevel(
         level
@@ -451,8 +593,7 @@ export function generateLevel({
 }
 
 /*
- * Генерируем сразу несколько
- * кандидатов.
+ * Генерируем сразу несколько уровней.
  */
 export function generateLevels({
   count = 10,
