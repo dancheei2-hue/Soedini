@@ -1,524 +1,482 @@
 import { useEffect, useRef, useState } from "react";
-import "./style.css";
-
-const COLORS = [
-  "#ff5b5b",
-  "#4b83ff",
-  "#35c878",
-  "#ff9b38",
-  "#a56bff",
-  "#22bfc2",
-  "#e94f9b",
-  "#7660e8",
-];
 
 const LEVELS = [
   {
-    n: 5,
+    size: 5,
     paths: [
-      [[0,0],[1,0],[1,1],[2,1],[2,2],[3,2],[4,2],[4,3],[4,4]],
-      [[0,4],[0,3],[0,2],[0,1],[1,1],[2,1],[3,1],[3,0],[4,0]],
-      [[2,0],[2,1],[2,2],[2,3],[2,4]],
-      [[4,1],[3,1],[3,2],[3,3],[3,4]],
+      [18, 13, 8, 7, 6, 11, 16],
+      [1, 2, 3, 4, 9, 14],
+      [19, 24, 23, 22, 17, 12],
+      [21, 20, 15, 10, 5, 0],
     ],
   },
   {
-    n: 6,
+    size: 6,
     paths: [
-      [[0,0],[1,0],[2,0],[2,1],[2,2],[3,2],[4,2],[5,2],[5,3],[5,4],[5,5]],
-      [[0,5],[0,4],[0,3],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0],[5,0]],
-      [[3,5],[3,4],[3,3],[2,3],[2,2],[2,1],[3,1],[4,1],[4,2],[4,3],[4,4],[4,5]],
-      [[5,1],[4,1],[4,2],[4,3],[3,3],[2,3],[2,4],[1,4],[1,5],[0,5]],
+      [30, 24, 25, 26, 20, 14, 13, 19],
+      [17, 23, 22, 16, 15, 21, 27],
+      [4, 5, 11, 10, 9, 8, 7],
+      [18, 12, 6, 0, 1, 2, 3],
+      [28, 29, 35, 34, 33, 32, 31],
     ],
   },
   {
-    n: 7,
+    size: 7,
     paths: [
-      [[0,0],[1,0],[2,0],[2,1],[2,2],[3,2],[4,2],[5,2],[6,2],[6,3],[6,4],[6,5],[6,6]],
-      [[0,6],[0,5],[0,4],[1,4],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0]],
-      [[3,6],[3,5],[3,4],[2,4],[2,3],[3,3],[4,3],[4,4],[4,5],[4,6]],
-      [[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,2],[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[4,3],[3,3],[3,4],[3,5],[3,6]],
-    ],
-  },
-  {
-    n: 7,
-    paths: [
-      [[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[3,4],[4,4],[5,4],[6,4],[6,5],[6,6]],
-      [[0,6],[0,5],[0,4],[1,4],[1,3],[2,3],[2,2],[2,1],[2,0],[3,0],[4,0],[5,0],[6,0]],
-      [[3,6],[4,6],[4,5],[4,4],[4,3],[4,2],[5,2],[6,2]],
-      [[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,3],[1,3],[1,2],[2,2],[2,3],[3,3],[3,2],[4,2],[4,1],[4,0]],
-    ],
-  },
-  {
-    n: 8,
-    paths: [
-      [[0,0],[1,0],[2,0],[2,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]],
-      [[0,7],[0,6],[0,5],[1,5],[1,4],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0]],
-      [[3,7],[3,6],[3,5],[2,5],[2,4],[3,4],[4,4],[4,5],[4,6],[4,7]],
-      [[5,7],[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,3],[0,2],[1,2],[2,2],[2,3],[3,3],[4,3],[4,2],[4,1],[4,0]],
-      [[6,7],[6,6],[6,5],[6,4],[6,3],[6,2],[6,1],[6,0]],
-    ],
-  },
-  {
-    n: 8,
-    paths: [
-      [[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[3,4],[4,4],[5,4],[6,4],[7,4],[7,5],[7,6],[7,7]],
-      [[0,7],[0,6],[0,5],[0,4],[1,4],[1,3],[2,3],[2,2],[2,1],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0]],
-      [[3,7],[4,7],[4,6],[4,5],[4,4],[4,3],[5,3],[6,3],[6,2],[6,1],[6,0]],
-      [[5,7],[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,2],[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[5,2],[5,3],[4,3],[3,3],[3,4],[2,4],[2,5],[2,6],[2,7]],
-      [[7,2],[7,1],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7]],
-    ],
-  },
-  {
-    n: 9,
-    paths: [
-      [[0,0],[1,0],[2,0],[2,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8]],
-      [[0,8],[0,7],[0,6],[1,6],[1,5],[1,4],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0]],
-      [[3,8],[3,7],[3,6],[2,6],[2,5],[3,5],[4,5],[4,6],[4,7],[4,8]],
-      [[5,8],[5,7],[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,3],[0,2],[1,2],[2,2],[2,3],[3,3],[4,3],[4,2],[4,1],[4,0]],
-      [[7,8],[7,7],[7,6],[7,5],[7,4],[7,3],[7,2],[7,1],[7,0]],
-    ],
-  },
-  {
-    n: 10,
-    paths: [
-      [[0,0],[1,0],[2,0],[2,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2],[9,3],[9,4],[9,5],[9,6],[9,7],[9,8],[9,9]],
-      [[0,9],[0,8],[0,7],[1,7],[1,6],[1,5],[1,4],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]],
-      [[3,9],[3,8],[3,7],[2,7],[2,6],[3,6],[4,6],[4,7],[4,8],[4,9]],
-      [[5,9],[5,8],[5,7],[5,6],[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
-      [[0,3],[0,2],[1,2],[2,2],[2,3],[3,3],[4,3],[4,2],[4,1],[4,0]],
-      [[8,9],[8,8],[8,7],[8,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0]],
+      [27, 26, 25, 18, 11, 12, 19, 20, 13],
+      [44, 37, 30, 29, 36, 43, 42, 35, 28],
+      [6, 5, 4, 3, 10, 9, 16, 15, 8],
+      [17, 24, 31, 32, 33, 34, 41, 40, 39],
+      [23, 22, 21, 14, 7, 0, 1, 2],
+      [48, 47, 46, 45, 38],
     ],
   },
 ];
 
-export default function App() {
-  const canvasRef = useRef(null);
-  const boardRef = useRef(null);
+const COLORS = [
+  "#ff5c5c",
+  "#4d96ff",
+  "#ffd93d",
+  "#6bcb77",
+  "#a66cff",
+  "#ff8fab",
+];
 
+function App() {
   const [level, setLevel] = useState(0);
-  const [completed, setCompleted] = useState([]);
-  const [active, setActive] = useState(null);
-  const [hints, setHints] = useState(3);
-  const [hintMarks, setHintMarks] = useState([]);
-  const [won, setWon] = useState(false);
+  const [connections, setConnections] = useState([]);
+  const [activePath, setActivePath] = useState(null);
+  const [dragging, setDragging] = useState(false);
+
+  const boardRef = useRef(null);
+  const cellRefs = useRef({});
 
   const current = LEVELS[level];
+  const totalPairs = current.paths.length;
+  const totalCells = current.size * current.size;
 
-  const cellSize = () =>
-    boardRef.current
-      ? boardRef.current.clientWidth / current.n
-      : 0;
+  const usedCells = connections.reduce(
+    (sum, path) => sum + path.length,
+    0
+  );
 
-  const position = (cell) => {
-    const s = cellSize();
+  const endpointToPair = new Map();
+
+  current.paths.forEach((path, pairIndex) => {
+    endpointToPair.set(path[0], pairIndex);
+    endpointToPair.set(path[path.length - 1], pairIndex);
+  });
+
+  function isEndpoint(cell) {
+    return endpointToPair.has(cell);
+  }
+
+  function getColor(cell) {
+    const pairIndex = endpointToPair.get(cell);
+    return COLORS[pairIndex % COLORS.length];
+  }
+
+  function isOccupied(cell) {
+    return connections.some((path) => path.includes(cell));
+  }
+
+  function areAdjacent(a, b) {
+    const ar = Math.floor(a / current.size);
+    const ac = a % current.size;
+
+    const br = Math.floor(b / current.size);
+    const bc = b % current.size;
+
+    return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
+  }
+
+  function pointForCell(cell) {
+    const board = boardRef.current;
+    const element = cellRefs.current[cell];
+
+    if (!board || !element) return null;
+
+    const boardRect = board.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
+
     return {
-      x: (cell[0] + 0.5) * s,
-      y: (cell[1] + 0.5) * s,
+      x:
+        ((cellRect.left +
+          cellRect.width / 2 -
+          boardRect.left) /
+          boardRect.width) *
+        100,
+
+      y:
+        ((cellRect.top +
+          cellRect.height / 2 -
+          boardRect.top) /
+          boardRect.height) *
+        100,
     };
-  };
+  }
 
-  const sameCell = (a, b) =>
-    a && b && a[0] === b[0] && a[1] === b[1];
+  function pathPoints(path) {
+    return path
+      .map(pointForCell)
+      .filter(Boolean)
+      .map((point) => `${point.x},${point.y}`)
+      .join(" ");
+  }
 
-  const getCellFromEvent = (event) => {
-    const rect = boardRef.current.getBoundingClientRect();
-    const s = rect.width / current.n;
+  function startPath(cell) {
+    if (!isEndpoint(cell)) return;
 
-    return [
-      Math.floor((event.clientX - rect.left) / s),
-      Math.floor((event.clientY - rect.top) / s),
-    ];
-  };
+    if (isOccupied(cell)) return;
 
-  const isOccupied = (cell, ignoreIndex) => {
-    for (let i = 0; i < completed.length; i++) {
-      if (i === ignoreIndex || !completed[i]) continue;
+    setActivePath([cell]);
+    setDragging(true);
+  }
 
-      if (completed[i].some((c) => sameCell(c, cell))) {
-        return true;
-      }
-    }
+  function movePath(cell) {
+    if (!dragging || !activePath) return;
 
+    const last = activePath[activePath.length - 1];
+
+    if (cell === last) return;
+
+    // Движение назад — убираем последнюю клетку.
     if (
-      active &&
-      active.index !== ignoreIndex &&
-      active.cells.some((c) => sameCell(c, cell))
+      activePath.length > 1 &&
+      cell === activePath[activePath.length - 2]
     ) {
-      return true;
-    }
-
-    return false;
-  };
-
-  const startLine = (event) => {
-    if (won) return;
-
-    const cell = getCellFromEvent(event);
-
-    const index = current.paths.findIndex(
-      (path) =>
-        sameCell(path[0], cell) ||
-        sameCell(path[path.length - 1], cell)
-    );
-
-    if (index === -1) return;
-
-    const path = current.paths[index];
-    const reverse = sameCell(path[path.length - 1], cell);
-
-    setActive({
-      index,
-      color: COLORS[index % COLORS.length],
-      cells: [cell],
-      reverse,
-    });
-
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-
-  const moveLine = (event) => {
-    if (!active) return;
-
-    const cell = getCellFromEvent(event);
-    const last = active.cells[active.cells.length - 1];
-
-    if (
-      cell[0] < 0 ||
-      cell[1] < 0 ||
-      cell[0] >= current.n ||
-      cell[1] >= current.n
-    ) {
+      setActivePath(activePath.slice(0, -1));
       return;
     }
 
-    const distance =
-      Math.abs(cell[0] - last[0]) +
-      Math.abs(cell[1] - last[1]);
+    // Только соседняя клетка.
+    if (!areAdjacent(last, cell)) return;
 
-    if (distance !== 1) return;
+    // Нельзя проходить через уже занятую клетку.
+    if (isOccupied(cell)) return;
 
-    if (active.cells.some((c) => sameCell(c, cell))) return;
+    // Нельзя заходить в чужую точку.
+    if (isEndpoint(cell)) {
+      const pairIndex = endpointToPair.get(activePath[0]);
 
-    if (isOccupied(cell, active.index)) return;
-
-    setActive({
-      ...active,
-      cells: [...active.cells, cell],
-    });
-  };
-
-  const endLine = () => {
-    if (!active) return;
-
-    const path = current.paths[active.index];
-
-    const target = active.reverse
-      ? path[0]
-      : path[path.length - 1];
-
-    const last = active.cells[active.cells.length - 1];
-
-    if (!sameCell(last, target)) {
-      setActive(null);
-      return;
-    }
-
-    const next = [...completed];
-    next[active.index] = active.cells;
-
-    setCompleted(next);
-    setActive(null);
-
-    if (next.filter(Boolean).length === current.paths.length) {
-      setWon(true);
-    }
-  };
-
-  const undo = () => {
-    if (active) {
-      setActive(null);
-      return;
-    }
-
-    const next = [...completed];
-
-    for (let i = next.length - 1; i >= 0; i--) {
-      if (next[i]) {
-        next[i] = null;
-        setCompleted(next);
-        setWon(false);
+      if (endpointToPair.get(cell) !== pairIndex) {
         return;
       }
     }
-  };
 
-  const restart = () => {
-    setCompleted([]);
-    setActive(null);
-    setHints(3);
-    setHintMarks([]);
-    setWon(false);
-  };
+    // Нельзя замыкать линию на саму себя.
+    if (activePath.includes(cell)) return;
 
-  const useHint = () => {
-    if (hints <= 0 || won) return;
+    setActivePath([...activePath, cell]);
+  }
 
-    const index = completed.findIndex((item) => !item);
+  function moveFromPointer(event) {
+    if (!dragging) return;
 
-    if (index === -1) return;
-
-    const path = current.paths[index];
-
-    /*
-      Подсказка ставится на следующую точку
-      правильного маршрута и остаётся до конца уровня.
-    */
-    const already = completed[index]?.length || 0;
-    const pointIndex = Math.min(
-      already + 1,
-      path.length - 2
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
     );
 
-    const point = path[pointIndex];
+    const cellElement = element?.closest(".cell");
 
-    const exists = hintMarks.some(
-      (hint) =>
-        hint.index === index &&
-        sameCell(hint.point, point)
+    if (!cellElement) return;
+
+    const cell = Number(cellElement.dataset.cell);
+
+    if (!Number.isNaN(cell)) {
+      movePath(cell);
+    }
+  }
+
+  function finishPath(cell) {
+    if (!dragging || !activePath) return;
+
+    const pairIndex = endpointToPair.get(activePath[0]);
+
+    const target =
+      current.paths[pairIndex][0] === activePath[0]
+        ? current.paths[pairIndex][
+            current.paths[pairIndex].length - 1
+          ]
+        : current.paths[pairIndex][0];
+
+    if (cell === target && activePath.length >= 2) {
+      setConnections([...connections, activePath]);
+    }
+
+    setActivePath(null);
+    setDragging(false);
+  }
+
+  function handlePointerDown(event, cell) {
+    event.preventDefault();
+
+    event.currentTarget.setPointerCapture?.(
+      event.pointerId
     );
 
-    if (exists) return;
+    startPath(cell);
+  }
 
-    setHintMarks([
-      ...hintMarks,
-      {
-        index,
-        point,
-      },
-    ]);
+  function handlePointerMove(event) {
+    if (!dragging) return;
 
-    setHints(hints - 1);
-  };
+    event.preventDefault();
+    moveFromPointer(event);
+  }
 
-  const nextLevel = () => {
-    if (!won) return;
+  function handlePointerUp(event) {
+    event.preventDefault();
 
-    setLevel((value) => (value + 1) % LEVELS.length);
-    setCompleted([]);
-    setActive(null);
-    setHints(3);
-    setHintMarks([]);
-    setWon(false);
-  };
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
+    );
+
+    const cellElement = element?.closest(".cell");
+
+    if (cellElement) {
+      const cell = Number(cellElement.dataset.cell);
+
+      if (!Number.isNaN(cell)) {
+        finishPath(cell);
+        return;
+      }
+    }
+
+    setActivePath(null);
+    setDragging(false);
+  }
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const board = boardRef.current;
-
-    if (!canvas || !board) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const size = board.clientWidth;
-
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    ctx.clearRect(0, 0, size, size);
-
-    // Фон
-    ctx.fillStyle = "#fafafa";
-    ctx.fillRect(0, 0, size, size);
-
-    const s = size / current.n;
-
-    // Сетка
-    ctx.strokeStyle = "#e7e7e7";
-    ctx.lineWidth = 1;
-
-    for (let i = 1; i < current.n; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * s, 0);
-      ctx.lineTo(i * s, size);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(0, i * s);
-      ctx.lineTo(size, i * s);
-      ctx.stroke();
+    function handleWindowPointerUp() {
+      if (dragging) {
+        setActivePath(null);
+        setDragging(false);
+      }
     }
 
-    const drawLine = (cells, color) => {
-      if (!cells || cells.length < 2) return;
+    window.addEventListener(
+      "pointerup",
+      handleWindowPointerUp
+    );
 
-      ctx.beginPath();
-
-      const first = position(cells[0]);
-      ctx.moveTo(first.x, first.y);
-
-      for (let i = 1; i < cells.length; i++) {
-        const p = position(cells[i]);
-        ctx.lineTo(p.x, p.y);
-      }
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(8, s * 0.18);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.stroke();
-    };
-
-    completed.forEach((path, index) => {
-      if (path) {
-        drawLine(
-          path,
-          COLORS[index % COLORS.length]
-        );
-      }
-    });
-
-    if (active) {
-      drawLine(active.cells, active.color);
-    }
-
-    // Конечные точки
-    current.paths.forEach((path, index) => {
-      const color = COLORS[index % COLORS.length];
-
-      [path[0], path[path.length - 1]].forEach((cell) => {
-        const p = position(cell);
-
-        ctx.beginPath();
-        ctx.arc(
-          p.x,
-          p.y,
-          Math.max(9, s * 0.24),
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      });
-    });
-
-    // Подсказки
-    hintMarks.forEach((hint) => {
-      const p = position(hint.point);
-      const color = COLORS[hint.index % COLORS.length];
-
-      ctx.beginPath();
-      ctx.arc(
-        p.x,
-        p.y,
-        Math.max(4, s * 0.11),
-        0,
-        Math.PI * 2
+    return () => {
+      window.removeEventListener(
+        "pointerup",
+        handleWindowPointerUp
       );
-
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    });
-  }, [
-    level,
-    completed,
-    active,
-    hintMarks,
-  ]);
-
-  useEffect(() => {
-    const handler = () => {
-      // заставляет canvas перерисоваться после изменения размера
-      setLevel((value) => value);
     };
+  }, [dragging]);
 
-    window.addEventListener("resize", handler);
+  function resetLevel() {
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
+  }
 
-    return () =>
-      window.removeEventListener("resize", handler);
-  }, []);
+  function undoLastMove() {
+    if (connections.length === 0 || dragging) return;
+
+    setConnections((previous) =>
+      previous.slice(0, -1)
+    );
+  }
+
+  function nextLevel() {
+    setLevel(
+      (previous) =>
+        (previous + 1) % LEVELS.length
+    );
+
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
+  }
+
+  const completed =
+    connections.length === totalPairs &&
+    usedCells === totalCells;
+
+  const progress = Math.round(
+    (usedCells / totalCells) * 100
+  );
 
   return (
     <div className="app">
-      <div className="top">
+      <header className="topbar">
         <div>
-          <div className="title">Соедини</div>
-          <div className="sub">
-            Уровень {level + 1} · поле {current.n}×{current.n}
+          <div className="logo">
+            СОЕДИНИ
+          </div>
+
+          <div className="subtitle">
+            Проведи каждую линию от точки до точки
           </div>
         </div>
 
-        <div className="actions">
-          <button className="small" onClick={undo}>
-            ↶ Назад
-          </button>
-
-          <button className="small" onClick={restart}>
-            ↻
-          </button>
+        <div className="level">
+          УРОВЕНЬ <strong>{level + 1}</strong>
         </div>
-      </div>
+      </header>
 
-      <div className="card">
+      <main className="game">
+        <div className="info">
+          <div className="stats">
+            <span>
+              Линии{" "}
+              <strong>{connections.length}</strong>/
+              {totalPairs}
+            </span>
+
+            <span>
+              Поле <strong>{progress}%</strong>
+            </span>
+          </div>
+
+          <div className="controls">
+            <button
+              onClick={undoLastMove}
+              disabled={
+                connections.length === 0 ||
+                dragging
+              }
+            >
+              ← Назад
+            </button>
+
+            <button onClick={resetLevel}>
+              Заново
+            </button>
+          </div>
+        </div>
+
         <div
           ref={boardRef}
           className="board"
-          onPointerDown={startLine}
-          onPointerMove={moveLine}
-          onPointerUp={endLine}
-          onPointerCancel={() => setActive(null)}
+          style={{
+            gridTemplateColumns: `repeat(${current.size}, 1fr)`,
+            gridTemplateRows: `repeat(${current.size}, 1fr)`,
+          }}
+          onPointerMove={handlePointerMove}
         >
-          <canvas ref={canvasRef} />
+          <svg
+            className="lines"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            {connections.map((path, index) => (
+              <polyline
+                key={`line-${index}`}
+                points={pathPoints(path)}
+                className="connection-line"
+                stroke={
+                  COLORS[index % COLORS.length]
+                }
+              />
+            ))}
+
+            {activePath && (
+              <polyline
+                points={pathPoints(activePath)}
+                className="connection-line active-line"
+                stroke={getColor(activePath[0])}
+              />
+            )}
+          </svg>
+
+          {Array.from({
+            length: totalCells,
+          }).map((_, index) => {
+            const endpoint = isEndpoint(index);
+
+            const connected = connections.some(
+              (path) => path.includes(index)
+            );
+
+            const active =
+              activePath?.includes(index);
+
+            const color = endpoint
+              ? getColor(index)
+              : null;
+
+            return (
+              <button
+                key={index}
+                ref={(element) => {
+                  if (element) {
+                    cellRefs.current[index] =
+                      element;
+                  }
+                }}
+                data-cell={index}
+                className={`cell ${
+                  endpoint ? "endpoint" : ""
+                } ${
+                  connected ? "connected" : ""
+                } ${
+                  active ? "active" : ""
+                }`}
+                onPointerDown={(event) =>
+                  handlePointerDown(
+                    event,
+                    index
+                  )
+                }
+                onPointerUp={handlePointerUp}
+                style={
+                  endpoint
+                    ? {
+                        "--dot-color": color,
+                      }
+                    : undefined
+                }
+                aria-label={`Клетка ${
+                  index + 1
+                }`}
+              >
+                {endpoint && (
+                  <span
+                    className="dot"
+                    style={{
+                      backgroundColor: color,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
-      </div>
 
-      <div className="info">
-        <b>{current.paths.length} пар</b>
-        <span>Подсказок: {hints}</span>
-      </div>
+        {completed && (
+          <div className="success">
+            <div className="success-title">
+              Уровень пройден
+            </div>
 
-      <div className={`msg ${won ? "win" : ""}`}>
-        {won
-          ? "Уровень пройден"
-          : "Соедини точки одного цвета"}
-      </div>
+            <div className="success-text">
+              Поле заполнено. Все пары соединены.
+            </div>
 
-      <div className="bottom">
-        <button
-          className="btn hint"
-          disabled={hints === 0 || won}
-          onClick={useHint}
-        >
-          Подсказка · {hints}
-        </button>
+            <button
+              className="next"
+              onClick={nextLevel}
+            >
+              Следующий уровень
+            </button>
+          </div>
+        )}
 
-        <button
-          className="btn next"
-          disabled={!won}
-          onClick={nextLevel}
-        >
-          Следующий уровень
-        </button>
-      </div>
+        {!completed && (
+          <div className="hint">
+            Зажми цветную точку и веди по клеткам
+          </div>
+        )}
+      </main>
     </div>
   );
 }
+
+export default App;
