@@ -35,14 +35,14 @@ const LEVELS = [
   },
 
   {
-  size: 5,
-  paths: [
-    [0, 1, 2, 3, 4, 9, 8],
-    [7, 6, 5, 10, 11, 12],
-    [13, 14, 19, 18, 17, 16],
-    [15, 20, 21, 22, 23, 24],
-  ],
-},
+    size: 5,
+    paths: [
+      [0, 1, 2, 3, 4, 9, 8],
+      [7, 6, 5, 10, 11, 12],
+      [13, 14, 19, 18, 17, 16],
+      [15, 20, 21, 22, 23, 24],
+    ],
+  },
 
   {
     size: 6,
@@ -139,6 +139,7 @@ function App() {
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [hintCells, setHintCells] = useState([]);
+  const [showLevels, setShowLevels] = useState(false);
 
   const boardRef = useRef(null);
   const cellRefs = useRef({});
@@ -246,8 +247,7 @@ function App() {
 
     if (cell === last) return;
 
-    // Движение назад —
-    // убираем последнюю клетку.
+    // Движение назад.
     if (
       activePath.length > 1 &&
       cell ===
@@ -265,8 +265,7 @@ function App() {
     if (!areAdjacent(last, cell))
       return;
 
-    // Нельзя проходить через
-    // уже занятую клетку.
+    // Нельзя проходить через занятую клетку.
     if (isOccupied(cell)) return;
 
     // Нельзя заходить в чужую точку.
@@ -284,8 +283,7 @@ function App() {
       }
     }
 
-    // Нельзя замыкать линию
-    // на саму себя.
+    // Нельзя замыкать линию на себя.
     if (activePath.includes(cell))
       return;
 
@@ -367,7 +365,6 @@ function App() {
     if (!dragging) return;
 
     event.preventDefault();
-
     moveFromPointer(event);
   }
 
@@ -432,55 +429,80 @@ function App() {
     );
   }
 
-  
-    function addHint() {
-  // Ищем пары, которые ещё не соединены.
-  const availablePaths = current.paths
-    .map((path, pairIndex) => ({
+  function addHint() {
+    const availablePaths =
+      current.paths
+        .map((path, pairIndex) => ({
+          path,
+          pairIndex,
+        }))
+        .filter(({ pairIndex }) => {
+          return !connections.some(
+            (connection) =>
+              endpointToPair.get(
+                connection[0]
+              ) === pairIndex
+          );
+        });
+
+    for (const {
       path,
       pairIndex,
-    }))
-    .filter(({ pairIndex }) => {
-      return !connections.some(
-        (connection) =>
-          endpointToPair.get(connection[0]) === pairIndex
-      );
-    });
+    } of availablePaths) {
+      const middleCells =
+        path.slice(1, -1);
 
-  // Ищем первую пару, для которой
-  // ещё остались клетки без подсказки.
-  for (const { path, pairIndex } of availablePaths) {
-    const middleCells = path.slice(1, -1);
+      const revealedCells =
+        hintCells
+          .filter(
+            (hint) =>
+              hint.pairIndex ===
+              pairIndex
+          )
+          .map(
+            (hint) => hint.cell
+          );
 
-    const revealedCells = hintCells
-      .filter(
-        (hint) => hint.pairIndex === pairIndex
-      )
-      .map((hint) => hint.cell);
+      const nextCell =
+        middleCells.find(
+          (cell) =>
+            !revealedCells.includes(
+              cell
+            )
+        );
 
-    const nextCell = middleCells.find(
-      (cell) => !revealedCells.includes(cell)
-    );
+      if (
+        nextCell !== undefined
+      ) {
+        setHintCells(
+          (previous) => [
+            ...previous,
+            {
+              cell: nextCell,
+              pairIndex,
+            },
+          ]
+        );
 
-    if (nextCell !== undefined) {
-      setHintCells((previous) => [
-        ...previous,
-        {
-          cell: nextCell,
-          pairIndex,
-        },
-      ]);
-
-      return;
+        return;
+      }
     }
   }
-}
 
   function resetLevel() {
     setConnections([]);
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
+  }
+
+  function selectLevel(index) {
+    setLevel(index);
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
+    setHintCells([]);
+    setShowLevels(false);
   }
 
   function nextLevel() {
@@ -520,11 +542,65 @@ function App() {
           </div>
         </div>
 
-        <div className="level">
-          УРОВЕНЬ{" "}
-          <strong>
-            {level + 1}
-          </strong>
+        <div className="level-selector">
+          <button
+            className="level-current"
+            onClick={() =>
+              setShowLevels(
+                (previous) =>
+                  !previous
+              )
+            }
+          >
+            УРОВЕНЬ{" "}
+            <strong>
+              {level + 1}
+            </strong>
+
+            <span className="level-arrow">
+              {showLevels
+                ? "▲"
+                : "▼"}
+            </span>
+          </button>
+
+          {showLevels && (
+            <div className="levels-menu">
+              {LEVELS.map(
+                (_, index) => {
+                  const isCurrent =
+                    index === level;
+
+                  return (
+                    <button
+                      key={index}
+                      className={
+                        isCurrent
+                          ? "level-option current"
+                          : "level-option"
+                      }
+                      onClick={() =>
+                        selectLevel(
+                          index
+                        )
+                      }
+                    >
+                      <span>
+                        Уровень{" "}
+                        {index + 1}
+                      </span>
+
+                      {isCurrent && (
+                        <span className="check">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          )}
         </div>
       </header>
 
