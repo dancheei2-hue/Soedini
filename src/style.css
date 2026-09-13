@@ -6,8 +6,8 @@ html,
 body,
 #root {
   margin: 0;
-  width: 100%;
   min-height: 100%;
+  width: 100%;
 }
 
 body {
@@ -17,13 +17,8 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-
-  background: #0f1014;
-  color: #fff;
-
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+  background: #0d0f14;
+  color: #ffffff;
 }
 
 button {
@@ -32,21 +27,18 @@ button {
 
 .app {
   min-height: 100vh;
-  padding: 24px;
-
   background:
     radial-gradient(
-      circle at 50% -10%,
-      #2b303b 0%,
-      #17191f 42%,
-      #0f1014 100%
+      circle at top,
+      #1b1f29 0%,
+      #0d0f14 55%
     );
+  padding: 28px 20px 40px;
 }
 
 .topbar {
-  width: min(720px, 100%);
+  width: min(760px, 100%);
   margin: 0 auto 24px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -61,35 +53,25 @@ button {
 
 .subtitle {
   margin-top: 5px;
-
-  color: #858b97;
+  color: #858b98;
   font-size: 14px;
 }
 
 .level {
-  padding: 10px 15px;
-
-  border-radius: 12px;
-
-  background: rgba(255, 255, 255, 0.08);
-
-  color: #9da3ae;
-
-  font-size: 12px;
-  font-weight: 700;
-
   white-space: nowrap;
+  color: #858b98;
+  font-size: 13px;
+  letter-spacing: 1px;
 }
 
 .level strong {
-  margin-left: 5px;
-
-  color: #fff;
-  font-size: 17px;
+  color: #ffffff;
+  font-size: 18px;
+  margin-left: 4px;
 }
 
 .game {
-  width: min(720px, 100%);
+  width: min(760px, 100%);
   margin: 0 auto;
 }
 
@@ -97,296 +79,146 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
+  gap: 12px;
   margin-bottom: 14px;
-
-  color: #969ca7;
-  font-size: 14px;
 }
 
 .stats {
   display: flex;
+  align-items: center;
   gap: 18px;
+  color: #858b98;
+  font-size: 14px;
 }
 
 .stats strong {
-  color: #fff;
+  color: #ffffff;
 }
 
-.info button {
-  padding: 8px 14px;
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  border: 0;
+.controls button,
+.info > button {
+  border: 1px solid #2b303b;
+  background: #181b22;
+  color: #ffffff;
   border-radius: 10px;
-
-  background: #292d35;
-  color: #fff;
-
+  padding: 9px 13px;
   cursor: pointer;
-
   transition:
     background 0.15s ease,
+    opacity 0.15s ease,
     transform 0.15s ease;
 }
 
-.info button:hover {
-  background: #353a44;
+.controls button:hover:not(:disabled),
+.info > button:hover {
+  background: #232833;
 }
 
-.info button:active {
-  transform: scale(0.95);
+.controls button:active:not(:disabled),
+.info > button:active {
+  transform: scale(0.97);
+}
+
+.controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .board {
   position: relative;
-
-  width: min(650px, 100%);
-  aspect-ratio: 1 / 1;
-
-  margin: 0 auto;
-
   display: grid;
-
-  padding: 9px;
-  gap: 4px;
-
-  border-radius: 24px;
-
-  background: #252830;
-
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-
-  overflow: hidden;
-
-  touch-action: none;
-}
-
-.lines {
-  position: absolute;
-
-  inset: 0;
-
   width: 100%;
-  height: 100%;
-
-  z-index: 5;
-
-  pointer-events: none;
-
-  overflow: visible;
-}
-
-.connection-line {
-  fill: none;
-
-  stroke-width: 7;
-
-  stroke-linecap: round;
-  stroke-linejoin: round;
-
-  filter:
-    drop-shadow(0 0 4px currentColor)
-    drop-shadow(0 0 8px currentColor);
-}
-
-.active-line {
-  opacity: 0.8;
-
-  stroke-width: 7;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid #292e38;
+  border-radius: 18px;
+  background: #12151b;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  touch-action: none;
+  user-select: none;
 }
 
 .cell {
   position: relative;
-
-  z-index: 10;
-
   min-width: 0;
   min-height: 0;
-
-  border: 0;
-  border-radius: 10px;
-
-  background: #17191e;
-
-  cursor: crosshair;
-
   padding: 0;
-
+  border: 0;
+  border-right: 1px solid #242933;
+  border-bottom: 1px solid #242933;
+  background: transparent;
+  cursor: pointer;
   touch-action: none;
+}
 
-  transition:
-    background 0.12s ease,
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
+.cell:nth-last-child(-n + 5) {
+  border-bottom: 0;
 }
 
 .cell:hover {
-  background: #1d2027;
-}
-
-.cell:active {
-  transform: scale(0.96);
-}
-
-.cell.active {
-  background: #22262e;
-}
-
-.cell.connected {
   background: rgba(255, 255, 255, 0.025);
 }
 
-.cell.endpoint {
-  background: #1b1e24;
+.cell.active {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.cell.connected {
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .dot {
   position: absolute;
-
   left: 50%;
   top: 50%;
-
-  width: 42%;
-  aspect-ratio: 1 / 1;
-
+  width: 24%;
+  aspect-ratio: 1;
+  min-width: 12px;
+  min-height: 12px;
+  max-width: 24px;
+  max-height: 24px;
   transform: translate(-50%, -50%);
-
   border-radius: 50%;
-
   box-shadow:
-    0 0 10px var(--dot-color),
-    0 0 22px var(--dot-color),
-    0 0 38px rgba(255, 255, 255, 0.08);
-
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    0 0 0 4px rgba(255, 255, 255, 0.06),
+    0 0 18px var(--dot-color);
+  z-index: 4;
+  pointer-events: none;
 }
 
-.cell.endpoint:hover .dot,
-.cell.endpoint:active .dot {
-  transform: translate(-50%, -50%) scale(1.12);
+.lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.cell.connected .dot {
-  box-shadow:
-    0 0 12px var(--dot-color),
-    0 0 28px var(--dot-color);
+.connection-line {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.95;
+  filter: drop-shadow(
+    0 0 5px rgba(255, 255, 255, 0.15)
+  );
+  pointer-events: none;
 }
 
-.hint {
-  margin-top: 18px;
-
-  text-align: center;
-
-  color: #777d88;
-  font-size: 14px;
+.active-line {
+  opacity: 0.7;
 }
 
-.success {
-  margin-top: 20px;
-  padding: 22px;
-
-  text-align: center;
-
-  border-radius: 18px;
-
-  background: rgba(107, 203, 119, 0.1);
-
-  border: 1px solid rgba(107, 203, 119, 0.25);
-}
-
-.success-title {
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.success-text {
-  margin-top: 6px;
-
-  color: #969ca6;
-  font-size: 14px;
-}
-
-.next {
-  margin-top: 16px;
-
-  padding: 12px 22px;
-
-  border: 0;
-  border-radius: 12px;
-
-  background: #fff;
-  color: #101114;
-
-  font-weight: 800;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.next:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
-}
-
-.next:active {
-  transform: scale(0.97);
-}
-
-@media (max-width: 600px) {
-  .app {
-    padding: 14px;
-  }
-
-  .topbar {
-    margin-bottom: 16px;
-  }
-
-  .logo {
-    font-size: 22px;
-    letter-spacing: 2px;
-  }
-
-  .subtitle {
-    font-size: 12px;
-  }
-
-  .level {
-    padding: 8px 10px;
-  }
-
-  .board {
-    padding: 7px;
-    gap: 3px;
-    border-radius: 18px;
-  }
-
-  .cell {
-    border-radius: 7px;
-  }
-
-  .dot {
-    width: 45%;
-  }
-
-  .connection-line {
-    stroke-width: 8;
-  }
-
-  .active-line {
-    stroke-width: 8;
-  }
-
-  .hint {
-    font-size: 13px;
-  }
-}
 .hint-dot {
   position: absolute;
   left: 50%;
@@ -402,3 +234,107 @@ button {
   z-index: 5;
 }
 
+.hint {
+  margin-top: 14px;
+  text-align: center;
+  color: #737987;
+  font-size: 14px;
+}
+
+.success {
+  margin-top: 18px;
+  padding: 22px;
+  text-align: center;
+  border: 1px solid #292e38;
+  border-radius: 16px;
+  background: #15181f;
+}
+
+.success-title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.success-text {
+  margin-top: 6px;
+  color: #858b98;
+  font-size: 14px;
+}
+
+.next {
+  margin-top: 16px;
+  border: 0;
+  border-radius: 11px;
+  padding: 12px 18px;
+  background: #ffffff;
+  color: #111318;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.next:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 18px 12px 28px;
+  }
+
+  .topbar {
+    margin-bottom: 18px;
+  }
+
+  .logo {
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .level {
+    font-size: 11px;
+  }
+
+  .level strong {
+    font-size: 16px;
+  }
+
+  .info {
+    align-items: flex-end;
+  }
+
+  .stats {
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .controls {
+    gap: 5px;
+  }
+
+  .controls button {
+    padding: 8px 9px;
+    font-size: 12px;
+  }
+
+  .board {
+    border-radius: 14px;
+  }
+
+  .connection-line {
+    stroke-width: 5.5;
+  }
+
+  .dot {
+    min-width: 13px;
+    min-height: 13px;
+  }
+
+  .hint-dot {
+    width: 7px;
+    height: 7px;
+  }
+}
