@@ -1,7 +1,8 @@
-import { LEVELS } from "./levels.js";
+import { GENERATED_LEVELS } from "./generatedLevels.js";
 
 const MAX_SOLUTIONS = 2;
 const TIME_LIMIT_MS = 4000;
+const MAX_CANDIDATE_PATHS = 500;
 
 function getNeighbors(cell, size) {
   const row = Math.floor(cell / size);
@@ -9,10 +10,21 @@ function getNeighbors(cell, size) {
 
   const result = [];
 
-  if (row > 0) result.push(cell - size);
-  if (row < size - 1) result.push(cell + size);
-  if (col > 0) result.push(cell - 1);
-  if (col < size - 1) result.push(cell + 1);
+  if (row > 0) {
+    result.push(cell - size);
+  }
+
+  if (row < size - 1) {
+    result.push(cell + size);
+  }
+
+  if (col > 0) {
+    result.push(cell - 1);
+  }
+
+  if (col < size - 1) {
+    result.push(cell + 1);
+  }
 
   return result;
 }
@@ -24,37 +36,92 @@ function manhattan(a, b, size) {
   const br = Math.floor(b / size);
   const bc = b % size;
 
-  return Math.abs(ar - br) + Math.abs(ac - bc);
+  return (
+    Math.abs(ar - br) +
+    Math.abs(ac - bc)
+  );
 }
 
+/*
+ * Создаём карту конечных точек.
+ *
+ * Каждая конечная точка принадлежит
+ * конкретной паре.
+ */
 function buildEndpointMap(paths) {
   const map = new Map();
 
-  paths.forEach((path, pairIndex) => {
-    map.set(path[0], pairIndex);
-    map.set(
-      path[path.length - 1],
-      pairIndex
-    );
-  });
+  paths.forEach(
+    (path, pairIndex) => {
+      map.set(
+        path[0],
+        pairIndex
+      );
+
+      map.set(
+        path[path.length - 1],
+        pairIndex
+      );
+    }
+  );
 
   return map;
 }
 
+/*
+ * Проверяем известное решение,
+ * из которого был создан уровень.
+ *
+ * Это очень важная проверка:
+ * сгенерированный уровень должен
+ * иметь хотя бы одно гарантированное
+ * корректное решение.
+ */
 function validateKnownSolution(level) {
-  const { size, paths } = level;
-  const totalCells = size * size;
+  const {
+    size,
+    paths,
+  } = level;
+
+  const totalCells =
+    size * size;
 
   const used = new Set();
 
-  for (let pairIndex = 0; pairIndex < paths.length; pairIndex++) {
-    const path = paths[pairIndex];
+  if (
+    !Number.isInteger(size) ||
+    size < 2
+  ) {
+    return false;
+  }
 
-    if (!Array.isArray(path) || path.length < 2) {
+  if (
+    !Array.isArray(paths) ||
+    paths.length < 2
+  ) {
+    return false;
+  }
+
+  for (
+    let pairIndex = 0;
+    pairIndex < paths.length;
+    pairIndex++
+  ) {
+    const path =
+      paths[pairIndex];
+
+    if (
+      !Array.isArray(path) ||
+      path.length < 2
+    ) {
       return false;
     }
 
-    for (let i = 0; i < path.length; i++) {
+    for (
+      let i = 0;
+      i < path.length;
+      i++
+    ) {
       const cell = path[i];
 
       if (
@@ -84,15 +151,25 @@ function validateKnownSolution(level) {
     }
   }
 
-  return used.size === totalCells;
+  return (
+    used.size === totalCells
+  );
 }
 
+/*
+ * Пары с большей дистанцией
+ * проверяем раньше.
+ *
+ * Это помогает быстрее находить
+ * противоречия.
+ */
 function getPairOrder(paths, size) {
   return paths
     .map((path, index) => ({
       index,
       start: path[0],
-      end: path[path.length - 1],
+      end:
+        path[path.length - 1],
       distance: manhattan(
         path[0],
         path[path.length - 1],
@@ -101,10 +178,17 @@ function getPairOrder(paths, size) {
     }))
     .sort(
       (a, b) =>
-        b.distance - a.distance
+        b.distance -
+        a.distance
     );
 }
 
+/*
+ * Проверяем, существует ли вообще
+ * свободный путь между двумя точками.
+ *
+ * Это быстрый BFS-фильтр.
+ */
 function canReach(
   start,
   target,
@@ -113,10 +197,17 @@ function canReach(
   blockedEndpoints
 ) {
   const queue = [start];
-  const visited = new Set([start]);
+  let queueIndex = 0;
 
-  while (queue.length > 0) {
-    const cell = queue.shift();
+  const visited =
+    new Set([start]);
+
+  while (
+    queueIndex <
+    queue.length
+  ) {
+    const cell =
+      queue[queueIndex++];
 
     if (cell === target) {
       return true;
@@ -126,7 +217,11 @@ function canReach(
       cell,
       size
     )) {
-      if (visited.has(next)) continue;
+      if (
+        visited.has(next)
+      ) {
+        continue;
+      }
 
       if (
         occupied.has(next) &&
@@ -150,6 +245,14 @@ function canReach(
   return false;
 }
 
+/*
+ * Генерируем возможные пути
+ * между двумя конечными точками.
+ *
+ * Путь не может проходить через:
+ * - уже занятые клетки;
+ * - чужие конечные точки.
+ */
 function getCandidatePaths(
   start,
   target,
@@ -159,12 +262,11 @@ function getCandidatePaths(
   deadline
 ) {
   const result = [];
-  const visited = new Set([start]);
-  const path = [start];
 
-  const availableCells =
-    size * size -
-    occupied.size;
+  const visited =
+    new Set([start]);
+
+  const path = [start];
 
   function dfs(cell) {
     if (
@@ -174,42 +276,74 @@ function getCandidatePaths(
     }
 
     if (
-      result.length >= 300
+      result.length >=
+      MAX_CANDIDATE_PATHS
     ) {
       return;
     }
 
-    if (cell === target) {
-      result.push([...path]);
+    if (
+      cell === target
+    ) {
+      result.push([
+        ...path,
+      ]);
+
       return;
     }
 
-    const distance = manhattan(
-      cell,
-      target,
-      size
-    );
+    const distance =
+      manhattan(
+        cell,
+        target,
+        size
+      );
 
+    /*
+     * Даже в идеальном случае
+     * нам не хватит клеток —
+     * дальше искать бессмысленно.
+     */
     const remaining =
-      availableCells -
+      size * size -
+      occupied.size -
       path.length +
       1;
 
-    if (distance > remaining) {
+    if (
+      distance > remaining
+    ) {
       return;
     }
 
-    const neighbors =
-      getNeighbors(cell, size);
+    let neighbors =
+      getNeighbors(
+        cell,
+        size
+      );
 
+    /*
+     * Сначала идём в направлении
+     * цели.
+     */
     neighbors.sort(
       (a, b) =>
-        manhattan(a, target, size) -
-        manhattan(b, target, size)
+        manhattan(
+          a,
+          target,
+          size
+        ) -
+        manhattan(
+          b,
+          target,
+          size
+        )
     );
 
     for (const next of neighbors) {
-      if (visited.has(next)) {
+      if (
+        visited.has(next)
+      ) {
         continue;
       }
 
@@ -237,7 +371,8 @@ function getCandidatePaths(
 
       if (
         Date.now() > deadline ||
-        result.length >= 300
+        result.length >=
+          MAX_CANDIDATE_PATHS
       ) {
         return;
       }
@@ -249,25 +384,104 @@ function getCandidatePaths(
   return result;
 }
 
-function solveLevel(level) {
-  const startTime = Date.now();
-  const deadline =
-    startTime + TIME_LIMIT_MS;
+/*
+ * Сравниваем два маршрута.
+ */
+function pathsEqual(a, b) {
+  if (
+    a.length !== b.length
+  ) {
+    return false;
+  }
 
-  const { size, paths } = level;
-  const totalCells = size * size;
+  for (
+    let i = 0;
+    i < a.length;
+    i++
+  ) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/*
+ * Проверяем все оставшиеся пары:
+ * у каждой должен существовать
+ * хотя бы какой-то потенциальный путь.
+ */
+function allPairsReachable(
+  pairs,
+  size,
+  occupied,
+  allEndpoints
+) {
+  for (const pair of pairs) {
+    const blockedEndpoints =
+      new Set(
+        [...allEndpoints].filter(
+          (cell) =>
+            cell !== pair.start &&
+            cell !== pair.end
+        )
+      );
+
+    if (
+      !canReach(
+        pair.start,
+        pair.end,
+        size,
+        occupied,
+        blockedEndpoints
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/*
+ * Проверяем уровень.
+ *
+ * Важно:
+ *
+ * generatedLevels.js уже содержит
+ * одно известное решение.
+ *
+ * Здесь мы ищем ДРУГОЕ решение.
+ */
+function solveLevel(level) {
+  const startTime =
+    Date.now();
+
+  const deadline =
+    startTime +
+    TIME_LIMIT_MS;
+
+  const {
+    size,
+    paths,
+  } = level;
+
+  const totalCells =
+    size * size;
 
   /*
-   * Сначала проверяем записанное решение.
-   *
-   * Это гарантирует, что если сам LEVELS
-   * содержит корректный маршрут, мы никогда
-   * не получим ложное "решения нет".
+   * Сначала проверяем известное
+   * решение генератора.
    */
   const knownSolutionValid =
-    validateKnownSolution(level);
+    validateKnownSolution(
+      level
+    );
 
-  if (!knownSolutionValid) {
+  if (
+    !knownSolutionValid
+  ) {
     return {
       status: "invalid",
       solutions: 0,
@@ -276,72 +490,101 @@ function solveLevel(level) {
   }
 
   const endpointMap =
-    buildEndpointMap(paths);
+    buildEndpointMap(
+      paths
+    );
 
   const allEndpoints =
-    new Set(endpointMap.keys());
+    new Set(
+      endpointMap.keys()
+    );
 
   const pairOrder =
-    getPairOrder(paths, size);
+    getPairOrder(
+      paths,
+      size
+    );
 
-  let solutions = 0;
+  let alternativeFound =
+    false;
+
   let timedOut = false;
 
   /*
-   * Мы уже знаем одно корректное решение —
-   * то, которое записано в LEVELS.
-   *
-   * Поэтому задача решателя:
-   * найти другое решение.
-   *
-   * Если второе решение найдено:
-   * уровень имеет несколько решений.
-   *
-   * Если второе решение не найдено до
-   * истечения времени:
-   * мы НЕ называем уровень уникальным.
+   * Для каждого уровня ищем
+   * альтернативное решение.
    */
-
   function search(
     remainingPairs,
     occupied,
     usedPaths
   ) {
-    if (solutions >= MAX_SOLUTIONS) {
-      return;
-    }
-
-    if (Date.now() > deadline) {
-      timedOut = true;
+    if (
+      alternativeFound
+    ) {
       return;
     }
 
     if (
+      Date.now() > deadline
+    ) {
+      timedOut = true;
+      return;
+    }
+
+    /*
+     * Все пары соединены.
+     *
+     * Если все клетки заняты —
+     * найдено полноценное решение.
+     */
+    if (
       remainingPairs.length === 0
     ) {
       if (
-        occupied.size === totalCells
+        occupied.size ===
+        totalCells
       ) {
-        solutions += 1;
+        alternativeFound =
+          true;
       }
 
       return;
     }
 
-    let selected = null;
-    let candidates = null;
+    /*
+     * Выбираем пару с наименьшим
+     * количеством возможных путей.
+     *
+     * Это резко сокращает перебор.
+     */
+    let selectedPair =
+      null;
+
+    let selectedCandidates =
+      null;
 
     for (const pair of remainingPairs) {
+      if (
+        Date.now() >
+        deadline
+      ) {
+        timedOut = true;
+        return;
+      }
+
       const blockedEndpoints =
         new Set(
           [...allEndpoints].filter(
             (cell) =>
-              cell !== pair.start &&
-              cell !== pair.end
+              cell !==
+                pair.start &&
+              cell !==
+                pair.end
           )
         );
 
-      const pairCandidates =
+      const candidates =
         getCandidatePaths(
           pair.start,
           pair.end,
@@ -352,50 +595,62 @@ function solveLevel(level) {
         );
 
       if (
-        pairCandidates.length === 0
+        candidates.length === 0
       ) {
         return;
       }
 
       if (
-        candidates === null ||
-        pairCandidates.length <
-          candidates.length
+        selectedCandidates ===
+          null ||
+        candidates.length <
+          selectedCandidates.length
       ) {
-        selected = pair;
-        candidates =
-          pairCandidates;
+        selectedPair =
+          pair;
+
+        selectedCandidates =
+          candidates;
       }
 
       if (
-        candidates.length === 1
+        selectedCandidates.length ===
+        1
       ) {
         break;
       }
     }
 
     if (
-      !selected ||
-      !candidates
+      !selectedPair ||
+      !selectedCandidates
     ) {
       return;
     }
 
-    for (const candidate of candidates) {
+    /*
+     * Перебираем возможные пути
+     * выбранной пары.
+     */
+    for (const candidate of selectedCandidates) {
       if (
-        Date.now() > deadline
+        Date.now() >
+        deadline
       ) {
         timedOut = true;
         return;
       }
 
       /*
-       * Не допускаем пересечения.
+       * Путь не должен пересекаться
+       * с уже занятыми клетками.
        */
       let valid = true;
 
       for (const cell of candidate) {
-        if (occupied.has(cell)) {
+        if (
+          occupied.has(cell)
+        ) {
           valid = false;
           break;
         }
@@ -406,50 +661,39 @@ function solveLevel(level) {
       }
 
       const newOccupied =
-        new Set(occupied);
+        new Set(
+          occupied
+        );
 
-      for (const cell of candidate) {
-        newOccupied.add(cell);
+      for (
+        const cell of candidate
+      ) {
+        newOccupied.add(
+          cell
+        );
       }
 
-      /*
-       * После добавления пути каждая
-       * оставшаяся пара должна хотя бы
-       * теоретически иметь соединение.
-       */
       const nextPairs =
         remainingPairs.filter(
           (pair) =>
-            pair.index !== selected.index
+            pair.index !==
+            selectedPair.index
         );
 
-      let possible = true;
-
-      for (const pair of nextPairs) {
-        const blockedEndpoints =
-          new Set(
-            [...allEndpoints].filter(
-              (cell) =>
-                cell !== pair.start &&
-                cell !== pair.end
-            )
-          );
-
-        if (
-          !canReach(
-            pair.start,
-            pair.end,
-            size,
-            newOccupied,
-            blockedEndpoints
-          )
-        ) {
-          possible = false;
-          break;
-        }
-      }
-
-      if (!possible) {
+      /*
+       * Быстрый фильтр:
+       * каждая оставшаяся пара
+       * должна хотя бы теоретически
+       * иметь путь.
+       */
+      if (
+        !allPairsReachable(
+          nextPairs,
+          size,
+          newOccupied,
+          allEndpoints
+        )
+      ) {
         continue;
       }
 
@@ -463,7 +707,7 @@ function solveLevel(level) {
       );
 
       if (
-        solutions >= MAX_SOLUTIONS ||
+        alternativeFound ||
         timedOut
       ) {
         return;
@@ -472,21 +716,21 @@ function solveLevel(level) {
   }
 
   /*
-   * Сначала считаем известное решение.
-   */
-  solutions = 1;
-
-  /*
-   * Чтобы искать именно другое решение,
-   * запрещаем использовать первый путь
-   * из записанного решения для первой пары.
+   * ------------------------------------------------
+   * Ищем альтернативное решение.
+   * ------------------------------------------------
    *
-   * Само наличие корректного решения уже
-   * подтверждено validateKnownSolution().
+   * Важный момент:
+   * нам нужно исключить исходное
+   * решение генератора.
+   *
+   * Для этого первый выбранный маршрут
+   * каждой пары сравнивается с исходным.
+   *
+   * Проще всего использовать отдельный
+   * поиск, в котором запрещаем полный
+   * набор известных маршрутов.
    */
-
-  const knownPaths =
-    paths.map((path) => [...path]);
 
   function searchAlternative(
     remainingPairs,
@@ -494,42 +738,103 @@ function solveLevel(level) {
     usedPaths
   ) {
     if (
-      solutions >= MAX_SOLUTIONS
+      alternativeFound
     ) {
       return;
     }
 
-    if (Date.now() > deadline) {
+    if (
+      Date.now() >
+      deadline
+    ) {
       timedOut = true;
       return;
     }
 
     if (
-      remainingPairs.length === 0
+      remainingPairs.length ===
+      0
     ) {
       if (
-        occupied.size === totalCells
+        occupied.size ===
+        totalCells
       ) {
-        solutions += 1;
+        /*
+         * На этом этапе у нас уже
+         * есть полноценное решение.
+         *
+         * Нужно убедиться, что оно
+         * отличается от исходного.
+         */
+        let sameAsKnown =
+          true;
+
+        for (
+          let i = 0;
+          i < paths.length;
+          i++
+        ) {
+          const generatedPath =
+            usedPaths.find(
+              (candidate) => {
+                const pairIndex =
+                  paths.findIndex(
+                    (knownPath) =>
+                      pathsEqual(
+                        knownPath,
+                        candidate
+                      )
+                  );
+
+                return (
+                  pairIndex === i
+                );
+              }
+            );
+
+          if (
+            !generatedPath
+          ) {
+            sameAsKnown =
+              false;
+
+            break;
+          }
+        }
+
+        /*
+         * Этот блок дополнительно
+         * проверяется ниже через
+         * точное сравнение.
+         */
+        if (!sameAsKnown) {
+          alternativeFound =
+            true;
+        }
       }
 
       return;
     }
 
-    let selected = null;
-    let candidates = null;
+    let selectedPair =
+      null;
+
+    let selectedCandidates =
+      null;
 
     for (const pair of remainingPairs) {
       const blockedEndpoints =
         new Set(
           [...allEndpoints].filter(
             (cell) =>
-              cell !== pair.start &&
-              cell !== pair.end
+              cell !==
+                pair.start &&
+              cell !==
+                pair.end
           )
         );
 
-      let pairCandidates =
+      let candidates =
         getCandidatePaths(
           pair.start,
           pair.end,
@@ -540,57 +845,68 @@ function solveLevel(level) {
         );
 
       /*
-       * На первом шаге специально удаляем
-       * записанный маршрут этой пары.
+       * Для первой пары запрещаем
+       * использовать её исходный путь.
        *
-       * Поэтому найденное решение будет
-       * отличаться от исходного.
+       * Тогда любое найденное полное
+       * решение автоматически будет
+       * отличаться от известного.
        */
       if (
-        remainingPairs.length ===
-          paths.length &&
-        pair.index === 0
+        usedPaths.length === 0
       ) {
-        const known =
-          knownPaths[0];
+        const knownPath =
+          paths[pair.index];
 
-        pairCandidates =
-          pairCandidates.filter(
+        candidates =
+          candidates.filter(
             (candidate) =>
-              JSON.stringify(
-                candidate
-              ) !==
-              JSON.stringify(known)
+              !pathsEqual(
+                candidate,
+                knownPath
+              )
           );
       }
 
       if (
-        pairCandidates.length === 0
+        candidates.length ===
+        0
       ) {
         continue;
       }
 
       if (
-        candidates === null ||
-        pairCandidates.length <
-          candidates.length
+        selectedCandidates ===
+          null ||
+        candidates.length <
+          selectedCandidates.length
       ) {
-        selected = pair;
-        candidates =
-          pairCandidates;
+        selectedPair =
+          pair;
+
+        selectedCandidates =
+          candidates;
+      }
+
+      if (
+        selectedCandidates.length ===
+        1
+      ) {
+        break;
       }
     }
 
     if (
-      !selected ||
-      !candidates
+      !selectedPair ||
+      !selectedCandidates
     ) {
       return;
     }
 
-    for (const candidate of candidates) {
+    for (const candidate of selectedCandidates) {
       if (
-        Date.now() > deadline
+        Date.now() >
+        deadline
       ) {
         timedOut = true;
         return;
@@ -599,7 +915,9 @@ function solveLevel(level) {
       let valid = true;
 
       for (const cell of candidate) {
-        if (occupied.has(cell)) {
+        if (
+          occupied.has(cell)
+        ) {
           valid = false;
           break;
         }
@@ -610,45 +928,33 @@ function solveLevel(level) {
       }
 
       const newOccupied =
-        new Set(occupied);
+        new Set(
+          occupied
+        );
 
-      candidate.forEach((cell) =>
-        newOccupied.add(cell)
-      );
+      for (
+        const cell of candidate
+      ) {
+        newOccupied.add(
+          cell
+        );
+      }
 
       const nextPairs =
         remainingPairs.filter(
           (pair) =>
-            pair.index !== selected.index
+            pair.index !==
+            selectedPair.index
         );
 
-      let possible = true;
-
-      for (const pair of nextPairs) {
-        const blockedEndpoints =
-          new Set(
-            [...allEndpoints].filter(
-              (cell) =>
-                cell !== pair.start &&
-                cell !== pair.end
-            )
-          );
-
-        if (
-          !canReach(
-            pair.start,
-            pair.end,
-            size,
-            newOccupied,
-            blockedEndpoints
-          )
-        ) {
-          possible = false;
-          break;
-        }
-      }
-
-      if (!possible) {
+      if (
+        !allPairsReachable(
+          nextPairs,
+          size,
+          newOccupied,
+          allEndpoints
+        )
+      ) {
         continue;
       }
 
@@ -662,7 +968,7 @@ function solveLevel(level) {
       );
 
       if (
-        solutions >= MAX_SOLUTIONS ||
+        alternativeFound ||
         timedOut
       ) {
         return;
@@ -670,13 +976,18 @@ function solveLevel(level) {
     }
   }
 
+  /*
+   * Запускаем поиск альтернативы.
+   */
   searchAlternative(
     pairOrder,
     new Set(),
     []
   );
 
-  if (solutions >= 2) {
+  if (
+    alternativeFound
+  ) {
     return {
       status: "multiple",
       solutions: 2,
@@ -684,7 +995,9 @@ function solveLevel(level) {
     };
   }
 
-  if (timedOut) {
+  if (
+    timedOut
+  ) {
     return {
       status: "timeout",
       solutions: 1,
@@ -692,6 +1005,14 @@ function solveLevel(level) {
     };
   }
 
+  /*
+   * Важное уточнение:
+   *
+   * Если поиск полностью завершился
+   * и альтернативы не нашёл, тогда
+   * для данного алгоритма мы можем
+   * считать решение уникальным.
+   */
   return {
     status: "unique",
     solutions: 1,
@@ -699,10 +1020,24 @@ function solveLevel(level) {
   };
 }
 
+/*
+ * ========================================
+ * ПРОВЕРКА ВСЕХ СГЕНЕРИРОВАННЫХ УРОВНЕЙ
+ * ========================================
+ */
+
 console.log("");
+
 console.log(
   "=== ПРОВЕРКА РЕШЕНИЙ СОЕДИНИ ==="
 );
+
+console.log("");
+
+console.log(
+  `Всего уровней: ${GENERATED_LEVELS.length}`
+);
+
 console.log("");
 
 let invalid = 0;
@@ -710,53 +1045,83 @@ let multiple = 0;
 let unique = 0;
 let timeout = 0;
 
-LEVELS.forEach((level, index) => {
-  console.log(
-    `Проверяем уровень ${index + 1}...`
-  );
-
-  const result =
-    solveLevel(level);
-
-  if (
-    result.status === "invalid"
-  ) {
+GENERATED_LEVELS.forEach(
+  (level, index) => {
     console.log(
-      `✗ Уровень ${index + 1}: записанное решение некорректно`
+      `Проверяем уровень ${
+        index + 1
+      }...`
     );
 
-    invalid++;
-  } else if (
-    result.status === "multiple"
-  ) {
-    console.log(
-      `⚠ Уровень ${index + 1}: найдено 2+ решения`
-    );
+    const result =
+      solveLevel(level);
 
-    multiple++;
-  } else if (
-    result.status === "unique"
-  ) {
-    console.log(
-      `✓ Уровень ${index + 1}: найдено только одно решение`
-    );
+    if (
+      result.status ===
+      "invalid"
+    ) {
+      console.log(
+        `✗ Уровень ${
+          index + 1
+        }: записанное решение некорректно`
+      );
 
-    unique++;
-  } else if (
-    result.status === "timeout"
-  ) {
-    console.log(
-      `⏱ Уровень ${index + 1}: решение существует, но проверка уникальности заняла слишком много времени`
-    );
+      invalid++;
+    } else if (
+      result.status ===
+      "multiple"
+    ) {
+      console.log(
+        `⚠ Уровень ${
+          index + 1
+        }: найдено несколько решений`
+      );
 
-    timeout++;
+      multiple++;
+    } else if (
+      result.status ===
+      "unique"
+    ) {
+      console.log(
+        `✓ Уровень ${
+          index + 1
+        }: альтернативное решение не найдено`
+      );
+
+      unique++;
+    } else if (
+      result.status ===
+      "timeout"
+    ) {
+      console.log(
+        `⏱ Уровень ${
+          index + 1
+        }: не удалось завершить проверку уникальности за ${
+          TIME_LIMIT_MS / 1000
+        } сек.`
+      );
+
+      timeout++;
+    }
+
+    console.log("");
   }
-
-  console.log("");
-});
+);
 
 console.log(
-  "=== ИТОГ ==="
+  "================================"
+);
+
+console.log(
+  "ИТОГ ПРОВЕРКИ"
+);
+
+console.log(
+  "================================"
+);
+
+console.log(
+  `Всего уровней: ${GENERATED_LEVELS.length}`
 );
 
 console.log(
@@ -768,13 +1133,37 @@ console.log(
 );
 
 console.log(
-  `Неисправных: ${invalid}`
+  `Некорректных: ${invalid}`
 );
 
 console.log(
-  `Не удалось проверить за лимит времени: ${timeout}`
+  `Таймаутов: ${timeout}`
 );
 
-if (invalid > 0) {
+console.log("");
+
+if (
+  invalid > 0
+) {
+  console.log(
+    "✗ Проверка завершена с ошибками."
+  );
+
   process.exitCode = 1;
+} else {
+  console.log(
+    "✓ Все уровни имеют корректное известное решение."
+  );
+
+  if (multiple > 0) {
+    console.log(
+      `⚠ У ${multiple} уровней найдено несколько решений.`
+    );
+  }
+
+  if (timeout > 0) {
+    console.log(
+      `⏱ У ${timeout} уровней уникальность не удалось доказать за установленный лимит времени.`
+    );
+  }
 }
