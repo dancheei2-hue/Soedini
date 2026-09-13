@@ -6,8 +6,8 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
   width: 100%;
+  min-height: 100%;
 }
 
 body {
@@ -57,17 +57,98 @@ button {
   font-size: 14px;
 }
 
-.level {
-  white-space: nowrap;
-  color: #858b98;
-  font-size: 13px;
-  letter-spacing: 1px;
+.level-selector {
+  position: relative;
+  flex-shrink: 0;
 }
 
-.level strong {
+.level-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #2b303b;
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: #181b22;
+  color: #aeb3bf;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.level-current:hover {
+  background: #232833;
+  border-color: #3a404d;
+}
+
+.level-current:active {
+  transform: scale(0.97);
+}
+
+.level-current strong {
   color: #ffffff;
-  font-size: 18px;
-  margin-left: 4px;
+  font-size: 20px;
+}
+
+.level-arrow {
+  margin-left: 2px;
+  color: #858b98;
+  font-size: 9px;
+}
+
+.levels-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 190px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 7px;
+  border: 1px solid #303540;
+  border-radius: 14px;
+  background: #181b22;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.5);
+}
+
+.level-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 12px;
+  background: transparent;
+  color: #aeb3bf;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.level-option:hover {
+  background: #242933;
+  color: #ffffff;
+}
+
+.level-option.current {
+  background: #292e38;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.check {
+  color: #6bcb77;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .game {
@@ -101,8 +182,7 @@ button {
   gap: 8px;
 }
 
-.controls button,
-.info > button {
+.controls button {
   border: 1px solid #2b303b;
   background: #181b22;
   color: #ffffff;
@@ -115,13 +195,11 @@ button {
     transform 0.15s ease;
 }
 
-.controls button:hover:not(:disabled),
-.info > button:hover {
+.controls button:hover:not(:disabled) {
   background: #232833;
 }
 
-.controls button:active:not(:disabled),
-.info > button:active {
+.controls button:active:not(:disabled) {
   transform: scale(0.97);
 }
 
@@ -157,10 +235,7 @@ button {
   background: transparent;
   cursor: pointer;
   touch-action: none;
-}
-
-.cell:nth-last-child(-n + 5) {
-  border-bottom: 0;
+  user-select: none;
 }
 
 .cell:hover {
@@ -209,9 +284,10 @@ button {
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.95;
-  filter: drop-shadow(
-    0 0 5px rgba(255, 255, 255, 0.15)
-  );
+  filter:
+    drop-shadow(
+      0 0 5px rgba(255, 255, 255, 0.15)
+    );
   pointer-events: none;
 }
 
@@ -270,10 +346,17 @@ button {
   color: #111318;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .next:hover {
   opacity: 0.9;
+}
+
+.next:active {
+  transform: scale(0.97);
 }
 
 @media (max-width: 600px) {
@@ -283,6 +366,7 @@ button {
 
   .topbar {
     margin-bottom: 18px;
+    gap: 10px;
   }
 
   .logo {
@@ -294,12 +378,24 @@ button {
     font-size: 12px;
   }
 
-  .level {
-    font-size: 11px;
+  .level-current {
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 10px;
   }
 
-  .level strong {
-    font-size: 16px;
+  .level-current strong {
+    font-size: 17px;
+  }
+
+  .levels-menu {
+    width: 170px;
+    max-height: 330px;
+  }
+
+  .level-option {
+    padding: 10px;
+    font-size: 13px;
   }
 
   .info {
