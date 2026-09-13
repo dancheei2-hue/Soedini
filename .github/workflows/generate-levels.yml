@@ -29,6 +29,9 @@ jobs:
       - name: Check generated levels
         run: npm run validate
 
+      - name: Check solutions
+        run: npm run solve
+
       - name: Commit generated levels
         run: |
           git config user.name "github-actions[bot]"
