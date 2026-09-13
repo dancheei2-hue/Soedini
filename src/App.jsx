@@ -668,23 +668,25 @@ function App() {
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            {connections.map(
-              (path, index) => (
-                <polyline
-                  key={`line-${index}`}
-                  points={pathPoints(
-                    path
-                  )}
-                  className="connection-line"
-                  stroke={
-                    COLORS[
-                      index %
-                        COLORS.length
-                    ]
-                  }
-                />
-              )
-            )}
+{connections.map(
+  (path, index) => {
+    const pairIndex =
+      endpointToPair.get(path[0]);
+
+    return (
+      <polyline
+        key={`line-${index}`}
+        points={pathPoints(path)}
+        className="connection-line"
+        stroke={
+          COLORS[
+            pairIndex % COLORS.length
+          ]
+        }
+      />
+    );
+  }
+)}
 
             {activePath && (
               <polyline
