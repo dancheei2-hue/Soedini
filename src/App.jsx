@@ -123,6 +123,7 @@ const LEVELS = [
     ],
   },
 ];
+
 const COLORS = [
   "#ff5c5c",
   "#4d96ff",
@@ -137,6 +138,7 @@ function App() {
   const [connections, setConnections] = useState([]);
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [hintCells, setHintCells] = useState([]);
 
   const boardRef = useRef(null);
   const cellRefs = useRef({});
@@ -154,7 +156,10 @@ function App() {
 
   current.paths.forEach((path, pairIndex) => {
     endpointToPair.set(path[0], pairIndex);
-    endpointToPair.set(path[path.length - 1], pairIndex);
+    endpointToPair.set(
+      path[path.length - 1],
+      pairIndex
+    );
   });
 
   function isEndpoint(cell) {
@@ -167,7 +172,9 @@ function App() {
   }
 
   function isOccupied(cell) {
-    return connections.some((path) => path.includes(cell));
+    return connections.some((path) =>
+      path.includes(cell)
+    );
   }
 
   function areAdjacent(a, b) {
@@ -177,7 +184,9 @@ function App() {
     const br = Math.floor(b / current.size);
     const bc = b % current.size;
 
-    return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
+    return (
+      Math.abs(ar - br) + Math.abs(ac - bc) === 1
+    );
   }
 
   function pointForCell(cell) {
@@ -186,8 +195,11 @@ function App() {
 
     if (!board || !element) return null;
 
-    const boardRect = board.getBoundingClientRect();
-    const cellRect = element.getBoundingClientRect();
+    const boardRect =
+      board.getBoundingClientRect();
+
+    const cellRect =
+      element.getBoundingClientRect();
 
     return {
       x:
@@ -210,7 +222,10 @@ function App() {
     return path
       .map(pointForCell)
       .filter(Boolean)
-      .map((point) => `${point.x},${point.y}`)
+      .map(
+        (point) =>
+          `${point.x},${point.y}`
+      )
       .join(" ");
   }
 
@@ -226,53 +241,77 @@ function App() {
   function movePath(cell) {
     if (!dragging || !activePath) return;
 
-    const last = activePath[activePath.length - 1];
+    const last =
+      activePath[activePath.length - 1];
 
     if (cell === last) return;
 
-    // Движение назад — убираем последнюю клетку.
+    // Движение назад —
+    // убираем последнюю клетку.
     if (
       activePath.length > 1 &&
-      cell === activePath[activePath.length - 2]
+      cell ===
+        activePath[
+          activePath.length - 2
+        ]
     ) {
-      setActivePath(activePath.slice(0, -1));
+      setActivePath(
+        activePath.slice(0, -1)
+      );
       return;
     }
 
     // Только соседняя клетка.
-    if (!areAdjacent(last, cell)) return;
+    if (!areAdjacent(last, cell))
+      return;
 
-    // Нельзя проходить через уже занятую клетку.
+    // Нельзя проходить через
+    // уже занятую клетку.
     if (isOccupied(cell)) return;
 
     // Нельзя заходить в чужую точку.
     if (isEndpoint(cell)) {
-      const pairIndex = endpointToPair.get(activePath[0]);
+      const pairIndex =
+        endpointToPair.get(
+          activePath[0]
+        );
 
-      if (endpointToPair.get(cell) !== pairIndex) {
+      if (
+        endpointToPair.get(cell) !==
+        pairIndex
+      ) {
         return;
       }
     }
 
-    // Нельзя замыкать линию на саму себя.
-    if (activePath.includes(cell)) return;
+    // Нельзя замыкать линию
+    // на саму себя.
+    if (activePath.includes(cell))
+      return;
 
-    setActivePath([...activePath, cell]);
+    setActivePath([
+      ...activePath,
+      cell,
+    ]);
   }
 
   function moveFromPointer(event) {
     if (!dragging) return;
 
-    const element = document.elementFromPoint(
-      event.clientX,
-      event.clientY
-    );
+    const element =
+      document.elementFromPoint(
+        event.clientX,
+        event.clientY
+      );
 
-    const cellElement = element?.closest(".cell");
+    const cellElement =
+      element?.closest(".cell");
 
     if (!cellElement) return;
 
-    const cell = Number(cellElement.dataset.cell);
+    const cell = Number(
+      cellElement.dataset.cell
+    );
 
     if (!Number.isNaN(cell)) {
       movePath(cell);
@@ -280,26 +319,41 @@ function App() {
   }
 
   function finishPath(cell) {
-    if (!dragging || !activePath) return;
+    if (!dragging || !activePath)
+      return;
 
-    const pairIndex = endpointToPair.get(activePath[0]);
+    const pairIndex =
+      endpointToPair.get(
+        activePath[0]
+      );
 
     const target =
-      current.paths[pairIndex][0] === activePath[0]
+      current.paths[pairIndex][0] ===
+      activePath[0]
         ? current.paths[pairIndex][
-            current.paths[pairIndex].length - 1
+            current.paths[pairIndex]
+              .length - 1
           ]
         : current.paths[pairIndex][0];
 
-    if (cell === target && activePath.length >= 2) {
-      setConnections([...connections, activePath]);
+    if (
+      cell === target &&
+      activePath.length >= 2
+    ) {
+      setConnections([
+        ...connections,
+        activePath,
+      ]);
     }
 
     setActivePath(null);
     setDragging(false);
   }
 
-  function handlePointerDown(event, cell) {
+  function handlePointerDown(
+    event,
+    cell
+  ) {
     event.preventDefault();
 
     event.currentTarget.setPointerCapture?.(
@@ -313,21 +367,26 @@ function App() {
     if (!dragging) return;
 
     event.preventDefault();
+
     moveFromPointer(event);
   }
 
   function handlePointerUp(event) {
     event.preventDefault();
 
-    const element = document.elementFromPoint(
-      event.clientX,
-      event.clientY
-    );
+    const element =
+      document.elementFromPoint(
+        event.clientX,
+        event.clientY
+      );
 
-    const cellElement = element?.closest(".cell");
+    const cellElement =
+      element?.closest(".cell");
 
     if (cellElement) {
-      const cell = Number(cellElement.dataset.cell);
+      const cell = Number(
+        cellElement.dataset.cell
+      );
 
       if (!Number.isNaN(cell)) {
         finishPath(cell);
@@ -360,37 +419,102 @@ function App() {
     };
   }, [dragging]);
 
-  function resetLevel() {
-    setConnections([]);
-    setActivePath(null);
-    setDragging(false);
-  }
-
   function undoLastMove() {
-    if (connections.length === 0 || dragging) return;
+    if (
+      connections.length === 0 ||
+      dragging
+    ) {
+      return;
+    }
 
     setConnections((previous) =>
       previous.slice(0, -1)
     );
   }
 
+  function addHint() {
+    const availablePaths =
+      current.paths
+        .map((path, pairIndex) => ({
+          path,
+          pairIndex,
+        }))
+        .filter(({ pairIndex }) => {
+          return !connections.some(
+            (connection) =>
+              endpointToPair.get(
+                connection[0]
+              ) === pairIndex
+          );
+        });
+
+    const selected =
+      availablePaths.find(
+        ({ pairIndex }) =>
+          !hintCells.some(
+            (hint) =>
+              hint.pairIndex ===
+              pairIndex
+          )
+      );
+
+    if (!selected) return;
+
+    const {
+      path,
+      pairIndex,
+    } = selected;
+
+    const middleCells =
+      path.slice(1, -1);
+
+    if (middleCells.length === 0)
+      return;
+
+    const hintCell =
+      middleCells[
+        Math.floor(
+          middleCells.length / 2
+        )
+      ];
+
+    setHintCells((previous) => [
+      ...previous,
+      {
+        cell: hintCell,
+        pairIndex,
+      },
+    ]);
+  }
+
+  function resetLevel() {
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
+    setHintCells([]);
+  }
+
   function nextLevel() {
     setLevel(
       (previous) =>
-        (previous + 1) % LEVELS.length
+        (previous + 1) %
+        LEVELS.length
     );
 
     setConnections([]);
     setActivePath(null);
     setDragging(false);
+    setHintCells([]);
   }
 
   const completed =
-    connections.length === totalPairs &&
+    connections.length ===
+      totalPairs &&
     usedCells === totalCells;
 
   const progress = Math.round(
-    (usedCells / totalCells) * 100
+    (usedCells / totalCells) *
+      100
   );
 
   return (
@@ -402,12 +526,16 @@ function App() {
           </div>
 
           <div className="subtitle">
-            Проведи каждую линию от точки до точки
+            Проведи каждую линию от точки
+            до точки
           </div>
         </div>
 
         <div className="level">
-          УРОВЕНЬ <strong>{level + 1}</strong>
+          УРОВЕНЬ{" "}
+          <strong>
+            {level + 1}
+          </strong>
         </div>
       </header>
 
@@ -416,12 +544,17 @@ function App() {
           <div className="stats">
             <span>
               Линии{" "}
-              <strong>{connections.length}</strong>/
-              {totalPairs}
+              <strong>
+                {connections.length}
+              </strong>
+              /{totalPairs}
             </span>
 
             <span>
-              Поле <strong>{progress}%</strong>
+              Поле{" "}
+              <strong>
+                {progress}%
+              </strong>
             </span>
           </div>
 
@@ -429,14 +562,24 @@ function App() {
             <button
               onClick={undoLastMove}
               disabled={
-                connections.length === 0 ||
+                connections.length ===
+                  0 ||
                 dragging
               }
             >
               ← Назад
             </button>
 
-            <button onClick={resetLevel}>
+            <button
+              onClick={addHint}
+              disabled={dragging}
+            >
+              Подсказка
+            </button>
+
+            <button
+              onClick={resetLevel}
+            >
               Заново
             </button>
           </div>
@@ -446,32 +589,47 @@ function App() {
           ref={boardRef}
           className="board"
           style={{
-            gridTemplateColumns: `repeat(${current.size}, 1fr)`,
-            gridTemplateRows: `repeat(${current.size}, 1fr)`,
+            gridTemplateColumns:
+              `repeat(${current.size}, 1fr)`,
+            gridTemplateRows:
+              `repeat(${current.size}, 1fr)`,
           }}
-          onPointerMove={handlePointerMove}
+          onPointerMove={
+            handlePointerMove
+          }
         >
           <svg
             className="lines"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            {connections.map((path, index) => (
-              <polyline
-                key={`line-${index}`}
-                points={pathPoints(path)}
-                className="connection-line"
-                stroke={
-                  COLORS[index % COLORS.length]
-                }
-              />
-            ))}
+            {connections.map(
+              (path, index) => (
+                <polyline
+                  key={`line-${index}`}
+                  points={pathPoints(
+                    path
+                  )}
+                  className="connection-line"
+                  stroke={
+                    COLORS[
+                      index %
+                        COLORS.length
+                    ]
+                  }
+                />
+              )
+            )}
 
             {activePath && (
               <polyline
-                points={pathPoints(activePath)}
+                points={pathPoints(
+                  activePath
+                )}
                 className="connection-line active-line"
-                stroke={getColor(activePath[0])}
+                stroke={getColor(
+                  activePath[0]
+                )}
               />
             )}
           </svg>
@@ -479,47 +637,70 @@ function App() {
           {Array.from({
             length: totalCells,
           }).map((_, index) => {
-            const endpoint = isEndpoint(index);
+            const endpoint =
+              isEndpoint(index);
 
-            const connected = connections.some(
-              (path) => path.includes(index)
-            );
+            const connected =
+              connections.some(
+                (path) =>
+                  path.includes(index)
+              );
 
             const active =
-              activePath?.includes(index);
+              activePath?.includes(
+                index
+              );
 
             const color = endpoint
               ? getColor(index)
               : null;
+
+            const hint =
+              hintCells.find(
+                (item) =>
+                  item.cell === index
+              );
 
             return (
               <button
                 key={index}
                 ref={(element) => {
                   if (element) {
-                    cellRefs.current[index] =
-                      element;
+                    cellRefs.current[
+                      index
+                    ] = element;
                   }
                 }}
                 data-cell={index}
                 className={`cell ${
-                  endpoint ? "endpoint" : ""
+                  endpoint
+                    ? "endpoint"
+                    : ""
                 } ${
-                  connected ? "connected" : ""
+                  connected
+                    ? "connected"
+                    : ""
                 } ${
-                  active ? "active" : ""
+                  active
+                    ? "active"
+                    : ""
                 }`}
-                onPointerDown={(event) =>
+                onPointerDown={(
+                  event
+                ) =>
                   handlePointerDown(
                     event,
                     index
                   )
                 }
-                onPointerUp={handlePointerUp}
+                onPointerUp={
+                  handlePointerUp
+                }
                 style={
                   endpoint
                     ? {
-                        "--dot-color": color,
+                        "--dot-color":
+                          color,
                       }
                     : undefined
                 }
@@ -531,7 +712,21 @@ function App() {
                   <span
                     className="dot"
                     style={{
-                      backgroundColor: color,
+                      backgroundColor:
+                        color,
+                    }}
+                  />
+                )}
+
+                {hint && (
+                  <span
+                    className="hint-dot"
+                    style={{
+                      backgroundColor:
+                        COLORS[
+                          hint.pairIndex %
+                            COLORS.length
+                        ],
                     }}
                   />
                 )}
@@ -547,7 +742,8 @@ function App() {
             </div>
 
             <div className="success-text">
-              Поле заполнено. Все пары соединены.
+              Поле заполнено. Все пары
+              соединены.
             </div>
 
             <button
@@ -561,7 +757,8 @@ function App() {
 
         {!completed && (
           <div className="hint">
-            Зажми цветную точку и веди по клеткам
+            Зажми цветную точку и веди
+            по клеткам
           </div>
         )}
       </main>
