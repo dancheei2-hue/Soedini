@@ -1,36 +1,34 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const LEVELS = [
   {
     size: 5,
-    pairs: [
-      [0, 6],
-      [2, 12],
-      [4, 18],
-      [10, 20],
-      [14, 24],
+    paths: [
+      [18, 13, 8, 7, 6, 11, 16],
+      [1, 2, 3, 4, 9, 14],
+      [19, 24, 23, 22, 17, 12],
+      [21, 20, 15, 10, 5, 0],
     ],
   },
   {
     size: 6,
-    pairs: [
-      [0, 7],
-      [2, 9],
-      [5, 17],
-      [12, 25],
-      [14, 20],
-      [18, 23],
+    paths: [
+      [30, 24, 25, 26, 20, 14, 13, 19],
+      [17, 23, 22, 16, 15, 21, 27],
+      [4, 5, 11, 10, 9, 8, 7],
+      [18, 12, 6, 0, 1, 2, 3],
+      [28, 29, 35, 34, 33, 32, 31],
     ],
   },
   {
-    size: 6,
-    pairs: [
-      [0, 14],
-      [2, 9],
-      [4, 22],
-      [6, 28],
-      [11, 25],
-      [15, 33],
+    size: 7,
+    paths: [
+      [27, 26, 25, 18, 11, 12, 19, 20, 13],
+      [44, 37, 30, 29, 36, 43, 42, 35, 28],
+      [6, 5, 4, 3, 10, 9, 16, 15, 8],
+      [17, 24, 31, 32, 33, 34, 41, 40, 39],
+      [23, 22, 21, 14, 7, 0, 1, 2],
+      [48, 47, 46, 45, 38],
     ],
   },
 ];
@@ -39,89 +37,270 @@ const COLORS = [
   "#ff5c5c",
   "#4d96ff",
   "#ffd93d",
-  "#6bcB77",
+  "#6bcb77",
   "#a66cff",
   "#ff8fab",
 ];
 
 function App() {
   const [level, setLevel] = useState(0);
-  const [selected, setSelected] = useState(null);
   const [connections, setConnections] = useState([]);
+  const [activePath, setActivePath] = useState(null);
+  const [dragging, setDragging] = useState(false);
+
+  const boardRef = useRef(null);
+  const cellRefs = useRef({});
 
   const current = LEVELS[level];
-  const totalPairs = current.pairs.length;
+  const totalPairs = current.paths.length;
+  const totalCells = current.size * current.size;
+
+  const usedCells = connections.reduce(
+    (sum, path) => sum + path.length,
+    0
+  );
+
+  const endpointToPair = new Map();
+
+  current.paths.forEach((path, pairIndex) => {
+    endpointToPair.set(path[0], pairIndex);
+    endpointToPair.set(path[path.length - 1], pairIndex);
+  });
 
   function isEndpoint(cell) {
-    return current.pairs.some(([a, b]) => a === cell || b === cell);
-  }
-
-  function getPair(cell) {
-    return current.pairs.find(([a, b]) => a === cell || b === cell);
+    return endpointToPair.has(cell);
   }
 
   function getColor(cell) {
-    const pairIndex = current.pairs.findIndex(
-      ([a, b]) => a === cell || b === cell
-    );
-
+    const pairIndex = endpointToPair.get(cell);
     return COLORS[pairIndex % COLORS.length];
   }
 
-  function handleCellClick(cell) {
+  function isOccupied(cell) {
+    return connections.some((path) => path.includes(cell));
+  }
+
+  function areAdjacent(a, b) {
+    const ar = Math.floor(a / current.size);
+    const ac = a % current.size;
+
+    const br = Math.floor(b / current.size);
+    const bc = b % current.size;
+
+    return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
+  }
+
+  function pointForCell(cell) {
+    const board = boardRef.current;
+    const element = cellRefs.current[cell];
+
+    if (!board || !element) return null;
+
+    const boardRect = board.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
+
+    return {
+      x:
+        ((cellRect.left +
+          cellRect.width / 2 -
+          boardRect.left) /
+          boardRect.width) *
+        100,
+
+      y:
+        ((cellRect.top +
+          cellRect.height / 2 -
+          boardRect.top) /
+          boardRect.height) *
+        100,
+    };
+  }
+
+  function pathPoints(path) {
+    return path
+      .map(pointForCell)
+      .filter(Boolean)
+      .map((point) => `${point.x},${point.y}`)
+      .join(" ");
+  }
+
+  function startPath(cell) {
     if (!isEndpoint(cell)) return;
 
-    if (selected === null) {
-      setSelected(cell);
+    if (isOccupied(cell)) return;
+
+    setActivePath([cell]);
+    setDragging(true);
+  }
+
+  function movePath(cell) {
+    if (!dragging || !activePath) return;
+
+    const last = activePath[activePath.length - 1];
+
+    if (cell === last) return;
+
+    // Движение назад — убираем последнюю клетку.
+    if (
+      activePath.length > 1 &&
+      cell === activePath[activePath.length - 2]
+    ) {
+      setActivePath(activePath.slice(0, -1));
       return;
     }
 
-    if (selected === cell) {
-      setSelected(null);
-      return;
-    }
+    // Только соседняя клетка.
+    if (!areAdjacent(last, cell)) return;
 
-    const pair = getPair(selected);
+    // Нельзя проходить через уже занятую клетку.
+    if (isOccupied(cell)) return;
 
-    if (pair && pair.includes(cell)) {
-      const alreadyConnected = connections.some(
-        (connection) =>
-          connection.includes(pair[0]) && connection.includes(pair[1])
-      );
+    // Нельзя заходить в чужую точку.
+    if (isEndpoint(cell)) {
+      const pairIndex = endpointToPair.get(activePath[0]);
 
-      if (!alreadyConnected) {
-        setConnections([...connections, pair]);
+      if (endpointToPair.get(cell) !== pairIndex) {
+        return;
       }
+    }
 
-      setSelected(null);
-    } else {
-      setSelected(cell);
+    // Нельзя замыкать линию на саму себя.
+    if (activePath.includes(cell)) return;
+
+    setActivePath([...activePath, cell]);
+  }
+
+  function moveFromPointer(event) {
+    if (!dragging) return;
+
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
+    );
+
+    const cellElement = element?.closest(".cell");
+
+    if (!cellElement) return;
+
+    const cell = Number(cellElement.dataset.cell);
+
+    if (!Number.isNaN(cell)) {
+      movePath(cell);
     }
   }
+
+  function finishPath(cell) {
+    if (!dragging || !activePath) return;
+
+    const pairIndex = endpointToPair.get(activePath[0]);
+
+    const target =
+      current.paths[pairIndex][0] === activePath[0]
+        ? current.paths[pairIndex][current.paths[pairIndex].length - 1]
+        : current.paths[pairIndex][0];
+
+    if (cell === target && activePath.length >= 2) {
+      setConnections([...connections, activePath]);
+    }
+
+    setActivePath(null);
+    setDragging(false);
+  }
+
+  function handlePointerDown(event, cell) {
+    event.preventDefault();
+
+    event.currentTarget.setPointerCapture?.(
+      event.pointerId
+    );
+
+    startPath(cell);
+  }
+
+  function handlePointerMove(event) {
+    if (!dragging) return;
+
+    event.preventDefault();
+    moveFromPointer(event);
+  }
+
+  function handlePointerUp(event) {
+    event.preventDefault();
+
+    const element = document.elementFromPoint(
+      event.clientX,
+      event.clientY
+    );
+
+    const cellElement = element?.closest(".cell");
+
+    if (cellElement) {
+      const cell = Number(cellElement.dataset.cell);
+
+      if (!Number.isNaN(cell)) {
+        finishPath(cell);
+        return;
+      }
+    }
+
+    setActivePath(null);
+    setDragging(false);
+  }
+
+  useEffect(() => {
+    function handleWindowPointerUp() {
+      if (dragging) {
+        setActivePath(null);
+        setDragging(false);
+      }
+    }
+
+    window.addEventListener(
+      "pointerup",
+      handleWindowPointerUp
+    );
+
+    return () => {
+      window.removeEventListener(
+        "pointerup",
+        handleWindowPointerUp
+      );
+    };
+  }, [dragging]);
 
   function resetLevel() {
     setConnections([]);
-    setSelected(null);
+    setActivePath(null);
+    setDragging(false);
   }
 
   function nextLevel() {
-    if (level < LEVELS.length - 1) {
-      setLevel(level + 1);
-      resetLevel();
-    } else {
-      setLevel(0);
-      resetLevel();
-    }
+    setLevel(
+      (previous) => (previous + 1) % LEVELS.length
+    );
+
+    setConnections([]);
+    setActivePath(null);
+    setDragging(false);
   }
 
-  const completed = connections.length === totalPairs;
+  const completed =
+    connections.length === totalPairs &&
+    usedCells === totalCells;
+
+  const progress = Math.round(
+    (usedCells / totalCells) * 100
+  );
 
   return (
     <div className="app">
       <header className="topbar">
         <div>
           <div className="logo">СОЕДИНИ</div>
-          <div className="subtitle">Соедини одинаковые точки</div>
+
+          <div className="subtitle">
+            Проведи каждую линию от точки до точки
+          </div>
         </div>
 
         <div className="level">
@@ -131,67 +310,134 @@ function App() {
 
       <main className="game">
         <div className="info">
-          <span>
-            Соединено: <strong>{connections.length}</strong> / {totalPairs}
-          </span>
+          <div className="stats">
+            <span>
+              Линии{" "}
+              <strong>{connections.length}</strong>/
+              {totalPairs}
+            </span>
 
-          <button onClick={resetLevel}>Заново</button>
+            <span>
+              Поле <strong>{progress}%</strong>
+            </span>
+          </div>
+
+          <button onClick={resetLevel}>
+            Заново
+          </button>
         </div>
 
         <div
+          ref={boardRef}
           className="board"
           style={{
             gridTemplateColumns: `repeat(${current.size}, 1fr)`,
             gridTemplateRows: `repeat(${current.size}, 1fr)`,
           }}
+          onPointerMove={handlePointerMove}
         >
-          {Array.from({ length: current.size * current.size }).map(
-            (_, index) => {
-              const endpoint = isEndpoint(index);
-              const connected = connections.some((pair) =>
-                pair.includes(index)
-              );
-              const color = endpoint ? getColor(index) : null;
-              const isSelected = selected === index;
+          <svg
+            className="lines"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            {connections.map((path, index) => (
+              <polyline
+                key={`line-${index}`}
+                points={pathPoints(path)}
+                className="connection-line"
+                stroke={
+                  COLORS[index % COLORS.length]
+                }
+              />
+            ))}
 
-              return (
-                <button
-                  key={index}
-                  className={`cell ${
-                    endpoint ? "endpoint" : ""
-                  } ${connected ? "connected" : ""} ${
-                    isSelected ? "selected" : ""
-                  }`}
-                  onClick={() => handleCellClick(index)}
-                  style={
-                    endpoint
-                      ? {
-                          "--dot-color": color,
-                        }
-                      : undefined
+            {activePath && (
+              <polyline
+                points={pathPoints(activePath)}
+                className="connection-line active-line"
+                stroke={getColor(activePath[0])}
+              />
+            )}
+          </svg>
+
+          {Array.from({
+            length: totalCells,
+          }).map((_, index) => {
+            const endpoint = isEndpoint(index);
+            const connected = connections.some(
+              (path) => path.includes(index)
+            );
+
+            const active =
+              activePath?.includes(index);
+
+            const color = endpoint
+              ? getColor(index)
+              : null;
+
+            return (
+              <button
+                key={index}
+                ref={(element) => {
+                  if (element) {
+                    cellRefs.current[index] =
+                      element;
                   }
-                  aria-label={`Клетка ${index + 1}`}
-                >
-                  {endpoint && (
-                    <span
-                      className="dot"
-                      style={{ backgroundColor: color }}
-                    />
-                  )}
-                </button>
-              );
-            }
-          )}
+                }}
+                data-cell={index}
+                className={`cell ${
+                  endpoint ? "endpoint" : ""
+                } ${
+                  connected ? "connected" : ""
+                } ${
+                  active ? "active" : ""
+                }`}
+                onPointerDown={(event) =>
+                  handlePointerDown(
+                    event,
+                    index
+                  )
+                }
+                onPointerUp={handlePointerUp}
+                style={
+                  endpoint
+                    ? {
+                        "--dot-color": color,
+                      }
+                    : undefined
+                }
+                aria-label={`Клетка ${
+                  index + 1
+                }`}
+              >
+                {endpoint && (
+                  <span
+                    className="dot"
+                    style={{
+                      backgroundColor: color,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {completed && (
           <div className="success">
-            <div className="success-title">Уровень пройден</div>
-            <div className="success-text">
-              Все пары соединены
+            <div className="success-title">
+              Уровень пройден
             </div>
 
-            <button className="next" onClick={nextLevel}>
+            <div className="success-text">
+              Поле заполнено. Все пары соединены.
+            </div>
+
+            <button
+              className="next"
+              onClick={nextLevel}
+            >
               Следующий уровень
             </button>
           </div>
@@ -199,7 +445,7 @@ function App() {
 
         {!completed && (
           <div className="hint">
-            Нажми на две одинаковые точки
+            Зажми цветную точку и веди по клеткам
           </div>
         )}
       </main>
