@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "validate": "node src/validateLevels.js",
-    "solve": "node src/solveLevels.js"
+    "solve": "node src/solveLevels.js",
     "generate": "node scripts/generateLevels.js"
   },
   "dependencies": {
