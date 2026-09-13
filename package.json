@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "validate": "node src/validateLevels.js",
     "solve": "node src/solveLevels.js"
+    "generate": "node scripts/generateLevels.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
