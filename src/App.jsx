@@ -432,60 +432,49 @@ function App() {
     );
   }
 
-  function addHint() {
-    const availablePaths =
-      current.paths
-        .map((path, pairIndex) => ({
-          path,
-          pairIndex,
-        }))
-        .filter(({ pairIndex }) => {
-          return !connections.some(
-            (connection) =>
-              endpointToPair.get(
-                connection[0]
-              ) === pairIndex
-          );
-        });
-
-    const selected =
-      availablePaths.find(
-        ({ pairIndex }) =>
-          !hintCells.some(
-            (hint) =>
-              hint.pairIndex ===
-              pairIndex
-          )
-      );
-
-    if (!selected) return;
-
-    const {
+  
+    function addHint() {
+  // Ищем пары, которые ещё не соединены.
+  const availablePaths = current.paths
+    .map((path, pairIndex) => ({
       path,
       pairIndex,
-    } = selected;
+    }))
+    .filter(({ pairIndex }) => {
+      return !connections.some(
+        (connection) =>
+          endpointToPair.get(connection[0]) === pairIndex
+      );
+    });
 
-    const middleCells =
-      path.slice(1, -1);
+  // Ищем первую пару, для которой
+  // ещё остались клетки без подсказки.
+  for (const { path, pairIndex } of availablePaths) {
+    const middleCells = path.slice(1, -1);
 
-    if (middleCells.length === 0)
+    const revealedCells = hintCells
+      .filter(
+        (hint) => hint.pairIndex === pairIndex
+      )
+      .map((hint) => hint.cell);
+
+    const nextCell = middleCells.find(
+      (cell) => !revealedCells.includes(cell)
+    );
+
+    if (nextCell !== undefined) {
+      setHintCells((previous) => [
+        ...previous,
+        {
+          cell: nextCell,
+          pairIndex,
+        },
+      ]);
+
       return;
-
-    const hintCell =
-      middleCells[
-        Math.floor(
-          middleCells.length / 2
-        )
-      ];
-
-    setHintCells((previous) => [
-      ...previous,
-      {
-        cell: hintCell,
-        pairIndex,
-      },
-    ]);
+    }
   }
+}
 
   function resetLevel() {
     setConnections([]);
