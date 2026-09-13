@@ -1,0 +1,39 @@
+name: Check Levels
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/levels.js"
+      - "src/validateLevels.js"
+      - "src/solveLevels.js"
+      - "package.json"
+      - ".github/workflows/check-levels.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate level structure
+        run: npm run validate
+
+      - name: Solve levels
+        run: npm run solve
