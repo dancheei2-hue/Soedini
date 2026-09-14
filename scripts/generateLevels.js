@@ -4,160 +4,191 @@ import {
   generateLevel,
 } from "../src/levelGenerator.js";
 
-const TOTAL_LEVELS = 100;
+
+const CONFIG = [];
+
 
 /*
- * Распределение сложности.
- *
- * 1–10   — 5×5
- * 11–25  — 6×6
- * 26–45  — 7×7
- * 46–70  — 8×8
- * 71–100 — 9×9
+ * 1–10: поле 5×5
  */
+for (let level = 1; level <= 10; level++) {
+  let pairCount = 3;
 
-const LEVEL_CONFIG = [];
-
-for (let i = 1; i <= TOTAL_LEVELS; i++) {
-  let size;
-  let pairCount;
-
-  if (i <= 10) {
-    size = 5;
-
-    pairCount =
-      i <= 3 ? 3 :
-      i <= 7 ? 4 :
-      5;
-  } else if (i <= 25) {
-    size = 6;
-
-    pairCount =
-      i <= 15 ? 4 :
-      i <= 20 ? 5 :
-      6;
-  } else if (i <= 45) {
-    size = 7;
-
-    pairCount =
-      i <= 32 ? 5 :
-      i <= 39 ? 6 :
-      7;
-  } else if (i <= 70) {
-    size = 8;
-
-    pairCount =
-      i <= 55 ? 6 :
-      i <= 63 ? 7 :
-      8;
-  } else {
-    size = 9;
-
-    pairCount =
-      i <= 82 ? 7 :
-      i <= 91 ? 8 :
-      9;
+  if (level >= 4 && level <= 7) {
+    pairCount = 4;
   }
 
-  LEVEL_CONFIG.push({
-    number: i,
-    size,
+  if (level >= 8) {
+    pairCount = 5;
+  }
+
+  CONFIG.push({
+    size: 5,
     pairCount,
   });
 }
 
+
+/*
+ * 11–25: поле 6×6
+ */
+for (let level = 11; level <= 25; level++) {
+  let pairCount = 4;
+
+  if (level >= 16 && level <= 20) {
+    pairCount = 5;
+  }
+
+  if (level >= 21) {
+    pairCount = 6;
+  }
+
+  CONFIG.push({
+    size: 6,
+    pairCount,
+  });
+}
+
+
+/*
+ * 26–45: поле 7×7
+ */
+for (let level = 26; level <= 45; level++) {
+  let pairCount = 5;
+
+  if (level >= 33 && level <= 39) {
+    pairCount = 6;
+  }
+
+  if (level >= 40) {
+    pairCount = 7;
+  }
+
+  CONFIG.push({
+    size: 7,
+    pairCount,
+  });
+}
+
+
+/*
+ * 46–70: поле 8×8
+ */
+for (let level = 46; level <= 70; level++) {
+  let pairCount = 6;
+
+  if (level >= 56 && level <= 63) {
+    pairCount = 7;
+  }
+
+  if (level >= 64) {
+    pairCount = 8;
+  }
+
+  CONFIG.push({
+    size: 8,
+    pairCount,
+  });
+}
+
+
+/*
+ * 71–100: поле 9×9
+ */
+for (let level = 71; level <= 100; level++) {
+  let pairCount = 7;
+
+  if (level >= 83 && level <= 91) {
+    pairCount = 8;
+  }
+
+  if (level >= 92) {
+    pairCount = 9;
+  }
+
+  CONFIG.push({
+    size: 9,
+    pairCount,
+  });
+}
+
+
+if (CONFIG.length !== 100) {
+  throw new Error(
+    `Ошибка конфигурации: создано ${CONFIG.length} уровней вместо 100`
+  );
+}
+
+
 console.log("");
-console.log(
-  "================================"
-);
-console.log(
-  "  ГЕНЕРАЦИЯ УРОВНЕЙ СОЕДИНИ"
-);
-console.log(
-  "================================"
-);
+console.log("===============================");
+console.log("  ГЕНЕРАЦИЯ УРОВНЕЙ СОЕДИНИ");
+console.log("===============================");
 console.log("");
 
-const generated = [];
 
-for (const config of LEVEL_CONFIG) {
+const levels = [];
+
+
+for (let i = 0; i < CONFIG.length; i++) {
   const {
-    number,
     size,
     pairCount,
-  } = config;
+  } = CONFIG[i];
+
+  const levelNumber = i + 1;
 
   process.stdout.write(
-    `Уровень ${number}/100 — ${size}×${size}, ${pairCount} пар... `
+    `Уровень ${levelNumber}/100 — ` +
+    `${size}×${size}, ` +
+    `${pairCount} пар... `
   );
 
-  let level = null;
-
-  /*
-   * Несколько попыток.
-   *
-   * Иногда случайный генератор
-   * не может быстро построить
-   * полный маршрут.
-   */
-  for (let attempt = 1; attempt <= 20; attempt++) {
-    level = generateLevel({
+  const level =
+    generateLevel({
       size,
       pairCount,
     });
-
-    if (level) {
-      break;
-    }
-  }
 
   if (!level) {
     console.log("ОШИБКА");
 
     throw new Error(
-      `Не удалось создать уровень ${number}`
+      `Не удалось создать уровень ${levelNumber}`
     );
   }
 
-  generated.push({
-    size: level.size,
-    paths: level.paths,
-  });
+  levels.push(level);
 
   console.log(
     `OK (${level.difficulty})`
   );
 }
 
+
 /*
- * Формируем содержимое generatedLevels.js.
+ * Формируем JavaScript-файл.
+ */
+const output = `/*
+ * АВТОМАТИЧЕСКИ СГЕНЕРИРОВАННЫЕ УРОВНИ
+ *
+ * Не редактировать вручную.
  */
 
-const output = `// ЭТОТ ФАЙЛ СОЗДАН АВТОМАТИЧЕСКИ.
-//
-// Не редактируй уровни вручную.
-// Для повторной генерации используй:
-//
-// npm run generate
-//
-// Всего уровней: ${generated.length}
-
 export const GENERATED_LEVELS = ${JSON.stringify(
-  generated,
+  levels,
   null,
   2
 )};
 `;
 
-/*
- * Путь к src/generatedLevels.js
- */
 
-const outputPath = path.resolve(
-  process.cwd(),
-  "src",
-  "generatedLevels.js"
-);
+const outputPath =
+  path.resolve(
+    "src",
+    "generatedLevels.js"
+  );
+
 
 fs.writeFileSync(
   outputPath,
@@ -165,17 +196,12 @@ fs.writeFileSync(
   "utf8"
 );
 
+
 console.log("");
 console.log(
-  "================================"
-);
-console.log(
-  `Готово: создано ${generated.length} уровней`
+  `Готово. Сгенерировано уровней: ${levels.length}`
 );
 console.log(
   `Файл: ${outputPath}`
-);
-console.log(
-  "================================"
 );
 console.log("");
