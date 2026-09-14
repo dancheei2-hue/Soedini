@@ -2817,3 +2817,138 @@ button:focus-visible {
     font-size: 27px !important;
   }
 }
+
+/* =========================================
+   ФИНАЛЬНАЯ КОМПАКТНАЯ ВЕРСИЯ ДЛЯ ТЕЛЕФОНА
+   Игровой экран строго помещается в высоту viewport.
+   ========================================= */
+
+@media (max-width: 600px) {
+  .game-screen {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    padding: 5px 8px 6px !important;
+  }
+
+  .game-screen .game-header {
+    margin-bottom: 5px !important;
+    gap: 5px !important;
+  }
+
+  .game-screen .back-button {
+    min-height: 33px !important;
+    padding: 5px 7px !important;
+    font-size: 8px !important;
+  }
+
+  .game-screen .game-logo {
+    font-size: 14px !important;
+  }
+
+  .game-screen .game-level {
+    margin-top: 3px !important;
+    font-size: 7px !important;
+  }
+
+  .game-screen .game-progress {
+    height: 40px !important;
+    min-height: 40px !important;
+    margin-top: 3px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .game-screen .game-progress::before {
+    left: 10px !important;
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 13px !important;
+  }
+
+  .game-screen .game-progress::after {
+    left: 38px !important;
+    right: 8px !important;
+    font-size: 8px !important;
+  }
+
+  .game-screen .info {
+    margin-bottom: 5px !important;
+  }
+
+  .game-screen .stats {
+    gap: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .game-screen .stats > * {
+    min-width: 58px !important;
+    padding: 4px 6px !important;
+    border-radius: 9px !important;
+    font-size: 7px !important;
+  }
+
+  .game-screen .stats > * strong {
+    font-size: 10px !important;
+  }
+
+  .game-screen .controls {
+    gap: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .game-screen .controls button {
+    min-height: 30px !important;
+    padding: 4px 6px !important;
+    border-radius: 9px !important;
+    font-size: 7px !important;
+  }
+
+  .game-screen .board {
+    width: min(
+      calc(100vw - 20px),
+      calc(100dvh - 355px)
+    ) !important;
+    max-width: min(
+      calc(100vw - 20px),
+      calc(100dvh - 355px)
+    ) !important;
+    margin: 0 auto !important;
+  }
+
+  .game-screen .hint {
+    margin-top: 3px !important;
+    padding: 3px 6px !important;
+    border-radius: 7px !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+  }
+
+  .game-screen::after {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) and (max-height: 700px) {
+  .game-screen .board {
+    width: min(
+      calc(100vw - 20px),
+      calc(100dvh - 325px)
+    ) !important;
+    max-width: min(
+      calc(100vw - 20px),
+      calc(100dvh - 325px)
+    ) !important;
+  }
+
+  .game-screen .game-progress {
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .game-screen .controls button {
+    min-height: 28px !important;
+    padding: 3px 5px !important;
+  }
+}
