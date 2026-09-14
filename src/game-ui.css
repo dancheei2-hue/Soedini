@@ -1,251 +1,553 @@
-/* =========================================
-   SOEDINI — MOBILE GAME UI
-   ========================================= */
+/* =========================================================
+   SOEDINI — GAME UI FIX
+   ========================================================= */
 
-.game-screen {
-  position: relative;
-  width: 100%;
-  min-height: 100svh;
-  padding: 8px 12px 12px;
-  overflow-x: hidden;
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* =========================================================
+   ЗОЛОТАЯ МОНЕТА
+   ========================================================= */
 
-/* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ
-   ========================================= */
-
-.game-header {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-
-  column-gap: 8px;
-
-  position: relative;
-  z-index: 10;
-}
-
-
-/* Кнопка "Уровни" */
-
-.game-header .back-button {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-
-/* Центральная часть */
-
-.game-header .game-title {
-  min-width: 0;
-  width: 100%;
-
-  text-align: center;
-
-  overflow: hidden;
-}
-
-
-/* Заголовок */
-
-.game-header .game-logo {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-/* Монеты */
-
-.game-header .coin-display {
-  position: relative;
-
-  min-width: 68px;
-  max-width: 82px;
-
-  height: 38px;
-
+.coin-display {
   display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
 
-  gap: 6px;
+  min-width: 82px !important;
+  height: 42px !important;
 
-  padding: 5px 9px !important;
+  padding: 6px 13px 6px 8px !important;
 
-  border: 1px solid rgba(255, 211, 77, 0.68) !important;
+  border: 1px solid rgba(255, 211, 77, 0.45) !important;
   border-radius: 999px !important;
 
   background:
     linear-gradient(
       145deg,
-      rgba(65, 58, 34, 0.9),
-      rgba(28, 29, 35, 0.94)
+      rgba(255, 220, 90, 0.12),
+      rgba(255, 255, 255, 0.035)
     ) !important;
 
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 18px rgba(255, 211, 77, 0.15),
-    0 8px 20px rgba(0, 0, 0, 0.22) !important;
+    inset 0 1px 0 rgba(255,255,255,.1),
+    0 0 22px rgba(255,211,77,.09) !important;
 
-  overflow: visible;
+  backdrop-filter: blur(15px);
 }
 
+.coin-icon {
+  position: relative !important;
 
-/* Монета */
-
-.game-header .coin-icon {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
+  width: 25px !important;
+  height: 25px !important;
+  min-width: 25px !important;
 
   display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
 
-  border-radius: 50%;
+  border-radius: 50% !important;
 
-  border: 2px solid #fff0a0;
+  color: transparent !important;
+  font-size: 0 !important;
 
   background:
     radial-gradient(
-      circle at 34% 28%,
-      #fffbdc 0%,
-      #ffe879 20%,
-      #ffd34d 45%,
-      #e4a817 73%,
-      #a86d00 100%
-    );
+      circle at 33% 28%,
+      #fff8c9 0%,
+      #ffe66b 22%,
+      #ffd034 48%,
+      #e5a918 72%,
+      #a66c00 100%
+    ) !important;
 
-  color: transparent !important;
-
-  font-size: 0;
-
-  filter:
-    drop-shadow(
-      0 0 7px rgba(255, 211, 77, 0.62)
-    );
+  border: 2px solid #fff0a0 !important;
 
   box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.8),
-    inset -2px -2px 4px rgba(118, 72, 0, 0.38);
+    inset 2px 2px 3px rgba(255,255,255,.7),
+    inset -2px -3px 4px rgba(113,67,0,.35),
+    0 0 12px rgba(255,211,77,.55) !important;
+
+  filter: none !important;
 }
 
+.coin-icon::before {
+  content: "●";
 
-.game-header .coin-icon::after {
-  content: "•";
+  position: absolute;
 
-  color: rgba(255, 248, 201, 0.95);
+  left: 50%;
+  top: 50%;
 
-  font-size: 13px;
+  transform: translate(-50%, -54%);
+
+  color: rgba(255,246,190,.9);
+
+  font-size: 8px;
 
   text-shadow:
-    0 0 5px rgba(255, 255, 255, 0.55);
+    0 1px 2px rgba(132,82,0,.5);
 }
 
+.coin-icon::after {
+  content: "";
 
-/* Число */
+  position: absolute;
 
-.game-header .coin-display > span:nth-child(2) {
+  width: 7px;
+  height: 4px;
+
+  top: 4px;
+  left: 5px;
+
+  border-radius: 50%;
+
+  background: rgba(255,255,255,.65);
+
+  transform: rotate(-25deg);
+
+  filter: blur(.3px);
+}
+
+.coin-display > span:nth-child(2) {
   color: #fff !important;
 
-  font-size: 15px !important;
-  line-height: 1;
+  font-size: 17px !important;
+  line-height: 1 !important;
 
   font-weight: 900 !important;
+
+  text-shadow:
+    0 1px 10px rgba(255,211,77,.18);
+}
+
+.coin-display > span:last-child {
+  color: rgba(255,255,255,.38) !important;
 }
 
 
-/* Если есть подпись — скрываем */
+/* =========================================================
+   ЭКРАН УРОВНЕЙ
+   ========================================================= */
 
-.game-header .coin-display > span:last-child {
-  display: none !important;
+.levels-screen {
+  min-height: 100dvh !important;
+}
+
+.levels-header {
+  position: relative;
+}
+
+.levels-header .coin-display {
+  margin-top: 17px !important;
 }
 
 
-/* =========================================
-   КАРТОЧКА ИНСТРУКЦИИ
-   ========================================= */
+/* =========================================================
+   ЭТАПЫ
+   ========================================================= */
 
-.game-progress {
+.level-stage {
   position: relative !important;
 
-  width: min(
-    520px,
-    calc(100% - 92px)
-  ) !important;
+  margin-bottom: 18px !important;
 
-  min-height: 58px !important;
+  --stage-color: #6bcb77;
+}
 
-  margin: 7px auto 9px !important;
+.level-stage:nth-of-type(1) {
+  --stage-color: #6bcb77;
+}
 
-  padding: 12px 14px 12px 52px !important;
+.level-stage:nth-of-type(2) {
+  --stage-color: #4d96ff;
+}
+
+.level-stage:nth-of-type(3) {
+  --stage-color: #ffd93d;
+}
+
+.level-stage:nth-of-type(4) {
+  --stage-color: #ff8c42;
+}
+
+.level-stage:nth-of-type(5) {
+  --stage-color: #a66cff;
+}
+
+
+/* =========================================================
+   ШАПКА ЭТАПА
+   ========================================================= */
+
+.stage-header {
+  position: relative !important;
+
+  width: 100% !important;
+  min-height: 76px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 14px !important;
+
+  padding: 15px 17px !important;
 
   border:
     1px solid
-    rgba(115, 137, 205, 0.25) !important;
+    color-mix(
+      in srgb,
+      var(--stage-color) 24%,
+      rgba(255,255,255,.08)
+    ) !important;
 
-  border-radius: 18px !important;
+  border-radius: 21px !important;
 
   background:
     linear-gradient(
       145deg,
-      rgba(48, 57, 95, 0.58),
-      rgba(25, 30, 53, 0.5)
+      rgba(255,255,255,.065),
+      rgba(255,255,255,.018)
     ) !important;
 
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 10px 28px rgba(0, 0, 0, 0.2) !important;
+    inset 0 1px 0 rgba(255,255,255,.055),
+    0 12px 32px rgba(0,0,0,.18) !important;
 
-  overflow: hidden;
+  overflow: hidden !important;
+}
+
+.stage-header::before {
+  content: "";
+
+  position: absolute;
+
+  width: 190px;
+  height: 190px;
+
+  top: -125px;
+  right: -60px;
+
+  border-radius: 50%;
+
+  background: var(--stage-color);
+
+  opacity: .08;
+
+  filter: blur(45px);
+
+  pointer-events: none;
 }
 
 
-/* Иконка */
+/* =========================================================
+   НАЗВАНИЕ ЭТАПА
+   ========================================================= */
+
+.stage-title {
+  position: relative !important;
+  z-index: 2;
+
+  min-width: 0;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 10px !important;
+}
+
+.stage-title > span:last-child {
+  display: block;
+
+  max-width: 220px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+
+  color: rgba(255,255,255,.38) !important;
+
+  font-size: 10px !important;
+
+  font-weight: 650 !important;
+}
+
+.stage-title strong {
+  color: #fff !important;
+
+  font-size: 21px !important;
+
+  line-height: 1 !important;
+
+  font-weight: 950 !important;
+
+  letter-spacing: -.035em !important;
+
+  white-space: nowrap;
+}
+
+
+/* Цветная точка */
+
+.stage-dot {
+  width: 12px !important;
+  height: 12px !important;
+
+  min-width: 12px !important;
+
+  display: block !important;
+
+  border-radius: 50% !important;
+
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,.035),
+    0 0 15px currentColor !important;
+}
+
+
+/* =========================================================
+   ПРОГРЕСС ЭТАПА
+   ========================================================= */
+
+.stage-progress {
+  position: relative !important;
+  z-index: 2;
+
+  flex: 0 0 auto;
+
+  color: var(--stage-color) !important;
+
+  font-size: 12px !important;
+
+  line-height: 1 !important;
+
+  font-weight: 900 !important;
+
+  white-space: nowrap !important;
+}
+
+
+/* Прогресс-бар непосредственно под шапкой */
+
+.level-stage > .progress-track {
+  height: 4px !important;
+
+  margin-top: 8px !important;
+  margin-bottom: 11px !important;
+
+  border-radius: 999px !important;
+
+  background:
+    rgba(255,255,255,.055) !important;
+}
+
+.level-stage > .progress-track .progress-fill {
+  border-radius: inherit !important;
+}
+
+
+/* =========================================================
+   СЕТКА УРОВНЕЙ
+   ========================================================= */
+
+.level-stage .level-grid {
+  width: 100%;
+
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr)) !important;
+
+  gap: 8px !important;
+
+  margin-top: 0 !important;
+}
+
+
+/* =========================================================
+   КАРТОЧКА УРОВНЯ
+   ========================================================= */
+
+.level-card {
+  aspect-ratio: 1 / 1 !important;
+
+  min-width: 0 !important;
+
+  position: relative !important;
+
+  overflow: hidden !important;
+
+  border-radius: 15px !important;
+
+  display: block !important;
+
+  padding: 0 !important;
+}
+
+.level-number {
+  font-size:
+    clamp(18px, 5vw, 24px) !important;
+
+  font-weight: 950 !important;
+}
+
+.level-label {
+  bottom: 7px !important;
+
+  font-size: 7px !important;
+
+  letter-spacing: .05em !important;
+}
+
+.level-status {
+  top: 6px !important;
+  right: 6px !important;
+
+  width: 18px !important;
+  height: 18px !important;
+}
+
+
+/* =========================================================
+   ЗАКРЫТЫЕ ЭТАПЫ
+   ========================================================= */
+
+.level-stage > div[style] {
+  min-height: 150px !important;
+
+  padding: 22px !important;
+
+  border-radius: 22px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.045),
+      rgba(255,255,255,.012)
+    ) !important;
+}
+
+
+/* =========================================================
+   ИГРОВОЙ ЭКРАН
+   ========================================================= */
+
+.game-screen {
+  min-height: 100dvh !important;
+
+  padding-bottom: 0 !important;
+
+  overflow-x: hidden !important;
+}
+
+
+/* =========================================================
+   ШАПКА ИГРЫ
+   ========================================================= */
+
+.game-header {
+  width: min(620px, 100%) !important;
+}
+
+.game-header .coin-display {
+  height: 42px !important;
+
+  min-width: 76px !important;
+}
+
+
+/* =========================================================
+   ИНСТРУКЦИЯ НАД ПОЛЕМ
+   ========================================================= */
+
+.game-progress {
+  position: relative !important;
+
+  width:
+    min(
+      540px,
+      calc(100vw - 120px)
+    ) !important;
+
+  min-width: 0 !important;
+
+  height: 68px !important;
+
+  min-height: 68px !important;
+
+  margin:
+    9px auto 12px !important;
+
+  padding:
+    0 16px 0 60px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  border:
+    1px solid
+    rgba(105,128,201,.25) !important;
+
+  border-radius: 20px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(45,54,91,.62),
+      rgba(24,29,49,.58)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 14px 35px rgba(0,0,0,.2) !important;
+
+  overflow: hidden !important;
+}
 
 .game-progress::before {
   content: "◎";
 
   position: absolute;
 
-  left: 15px;
+  left: 17px;
   top: 50%;
 
-  transform: translateY(-50%);
+  transform:
+    translateY(-50%);
 
-  width: 27px;
-  height: 27px;
+  width: 32px;
+  height: 32px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   border:
-    2px solid
-    #4d96ff;
+    2px solid #4d96ff;
 
   border-radius: 50%;
 
-  color: #8cc1ff;
+  color: #9bcbff;
 
-  font-size: 18px;
+  font-size: 20px;
 
   text-shadow:
-    0 0 10px rgba(77, 150, 255, 0.7);
+    0 0 10px rgba(77,150,255,.8);
 
   box-shadow:
-    0 0 0 4px rgba(77, 150, 255, 0.05),
-    0 0 16px rgba(77, 150, 255, 0.2);
+    0 0 0 4px rgba(77,150,255,.06),
+    0 0 20px rgba(77,150,255,.22);
 }
-
-
-/* Текст */
 
 .game-progress::after {
   content:
@@ -253,315 +555,383 @@
 
   position: absolute;
 
-  left: 52px;
-  right: 12px;
+  left: 60px;
+  right: 14px;
   top: 50%;
 
-  transform: translateY(-50%);
+  transform:
+    translateY(-50%);
 
   color:
-    rgba(235, 239, 255, 0.78);
+    rgba(232,237,255,.78);
 
-  font-size: 11px;
+  font-size: 12px;
 
-  line-height: 1.3;
+  line-height: 1.35;
 
   font-weight: 650;
 
   pointer-events: none;
 }
 
-
-/* Скрываем старое содержимое */
-
-.game-progress > * {
-  opacity: 0 !important;
+.game-progress > div {
+  display: none !important;
 }
 
 
-/* =========================================
+/* =========================================================
    СТАТИСТИКА
-   ========================================= */
+   ========================================================= */
 
-.game .info {
-  margin-top: 6px !important;
-  margin-bottom: 8px !important;
-}
-
-.game .stats {
-  gap: 7px !important;
-}
-
-.game .stats > * {
-  padding:
-    7px 12px !important;
-
-  border-radius:
-    14px !important;
-
-  font-size:
-    11px !important;
-}
-
-
-/* =========================================
-   КНОПКИ
-   ========================================= */
-
-.game .controls {
-  gap: 7px !important;
+.stats {
   margin-bottom: 10px !important;
 }
 
-.game .controls button {
-  min-height: 42px;
+.stats > span {
+  min-width: 88px !important;
 
   padding:
-    8px 13px !important;
+    7px 11px !important;
 
-  border-radius:
-    14px !important;
+  border-radius: 13px !important;
 
-  font-size:
-    12px !important;
+  font-size: 9px !important;
 }
 
 
-/* =========================================
-   ИГРОВОЕ ПОЛЕ
-   ========================================= */
+/* =========================================================
+   КНОПКИ
+   ========================================================= */
 
-/*
-   Главное изменение.
+.controls {
+  gap: 7px !important;
+}
 
-   Поле ограничено одновременно:
-   - шириной телефона;
-   - безопасной высотой экрана.
+.controls button {
+  min-height: 39px !important;
 
-   Поэтому 7x7, 8x8 и 9x9
-   не будут раздувать страницу.
-*/
+  padding:
+    7px 12px !important;
 
-.board {
-  width:
-    min(
-      100%,
-      calc(100vw - 28px),
-      500px
-    ) !important;
-
-  height:
-    auto !important;
-
-  aspect-ratio:
-    1 / 1 !important;
-
-  max-height:
-    min(
-      calc(100vw - 28px),
-      500px
-    ) !important;
-
-  margin:
-    0 auto !important;
-
-  display:
-    grid !important;
-
-  overflow:
-    hidden !important;
+  border-radius: 12px !important;
 }
 
 
-/* Ячейки */
-
-.board .cell {
-  min-width: 0 !important;
-  min-height: 0 !important;
-}
-
-
-/* =========================================
-   НИЖНЯЯ ЗОНА
-   ========================================= */
+/* =========================================================
+   НИЖНЯЯ ДЕКОРАТИВНАЯ ЗОНА
+   ========================================================= */
 
 .game-screen::after {
   content:
-    "ЛОГИКА • ФОКУС • ПОБЕДА";
+    "ЛОГИКА — ЭТО СПОРТ ДЛЯ МОЗГА";
+
+  position: relative;
 
   display: block;
 
-  width:
-    min(
-      560px,
-      calc(100% - 30px)
-    );
+  width: min(
+    700px,
+    calc(100% - 36px)
+  );
 
-  height: 54px;
+  height: 155px;
 
   margin:
-    10px auto 0;
+    22px auto 0;
 
-  padding:
-    20px 10px 0;
+  padding-top: 72px;
 
   border-top:
     1px solid
-    rgba(98, 121, 191, 0.14);
+    rgba(91,115,185,.15);
 
   border-radius:
     50% 50% 0 0 /
-    35% 35% 0 0;
+    28% 28% 0 0;
 
   color:
-    rgba(151, 174, 235, 0.38);
+    rgba(141,163,220,.32);
 
-  text-align:
-    center;
+  text-align: center;
 
-  font-size:
-    8px;
+  font-size: 9px;
 
-  line-height:
-    1;
+  font-weight: 850;
 
-  font-weight:
-    850;
-
-  letter-spacing:
-    0.2em;
+  letter-spacing: .18em;
 
   background:
     radial-gradient(
-      ellipse at 50% 100%,
-      rgba(62, 100, 210, 0.11),
-      transparent 68%
+      circle at 50% 100%,
+      rgba(53,91,190,.15),
+      transparent 48%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(17,26,57,.02),
+      rgba(20,31,67,.28)
     );
 
-  pointer-events:
-    none;
+  box-shadow:
+    inset 0 45px 60px
+    rgba(30,53,112,.05);
+
+  pointer-events: none;
 }
 
 
-/* =========================================
-   КОРОТКИЙ ЭКРАН
-   ========================================= */
+/* =========================================================
+   МОДАЛЬНОЕ ОКНО
+   ========================================================= */
 
-@media (max-height: 760px) {
+.success-overlay {
+  padding: 18px !important;
 
-  .game-screen {
-    padding-top: 4px;
+  background:
+    rgba(3,5,12,.78) !important;
+
+  backdrop-filter:
+    blur(16px) !important;
+}
+
+.success-modal {
+  width:
+    min(390px, calc(100vw - 36px)) !important;
+
+  padding:
+    28px 22px 22px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.13) !important;
+
+  border-radius: 25px !important;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(104,123,255,.16),
+      transparent 58%
+    ),
+    #11151f !important;
+
+  color: #fff !important;
+
+  box-shadow:
+    0 35px 100px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+
+  text-align: center !important;
+}
+
+.success-modal h2 {
+  margin:
+    0 0 10px !important;
+
+  color: #fff !important;
+
+  font-size: 25px !important;
+
+  line-height: 1.08 !important;
+
+  font-weight: 950 !important;
+
+  letter-spacing: -.04em !important;
+}
+
+.success-modal p {
+  margin:
+    0 auto 20px !important;
+
+  max-width: 300px !important;
+
+  color:
+    rgba(255,255,255,.52) !important;
+
+  font-size: 12px !important;
+
+  line-height: 1.5 !important;
+
+  font-weight: 600 !important;
+}
+
+.success-actions {
+  display: flex !important;
+
+  flex-direction: column !important;
+
+  gap: 8px !important;
+}
+
+.success-actions button {
+  width: 100% !important;
+
+  min-height: 46px !important;
+
+  border-radius: 14px !important;
+
+  font-size: 12px !important;
+
+  font-weight: 850 !important;
+}
+
+.success-next {
+  background:
+    linear-gradient(
+      135deg,
+      #687cff,
+      #8e69ff
+    ) !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.12) !important;
+
+  color: #fff !important;
+
+  box-shadow:
+    0 8px 25px
+    rgba(104,124,255,.22) !important;
+}
+
+.success-levels {
+  background:
+    rgba(255,255,255,.045) !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.08) !important;
+
+  color:
+    rgba(255,255,255,.72) !important;
+}
+
+
+/* =========================================================
+   ИКОНКА УСПЕХА
+   ========================================================= */
+
+.success-icon {
+  width: 62px !important;
+  height: 62px !important;
+
+  margin:
+    0 auto 15px !important;
+
+  border-radius: 50% !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #6f83ff,
+      #986dff
+    ) !important;
+
+  color: #fff !important;
+
+  box-shadow:
+    0 0 0 7px rgba(115,130,255,.07),
+    0 0 35px rgba(115,130,255,.22) !important;
+}
+
+
+/* =========================================================
+   АДАПТАЦИЯ IPHONE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .levels-screen {
+    padding:
+      20px 16px 34px !important;
+  }
+
+  .levels-header h1 {
+    font-size:
+      clamp(34px, 9vw, 48px) !important;
+  }
+
+  .stage-header {
+    min-height: 72px !important;
+
+    padding:
+      13px 14px !important;
+
+    gap: 8px !important;
+  }
+
+  .stage-title {
+    gap: 8px !important;
+  }
+
+  .stage-title strong {
+    font-size: 18px !important;
+  }
+
+  .stage-title > span:last-child {
+    display: none !important;
+  }
+
+  .stage-progress {
+    font-size: 11px !important;
+  }
+
+  .level-stage .level-grid {
+    gap: 7px !important;
+  }
+
+  .level-card {
+    border-radius: 13px !important;
+  }
+
+  .level-number {
+    font-size:
+      clamp(17px, 5vw, 22px) !important;
   }
 
   .game-progress {
-    min-height: 50px !important;
+    width:
+      calc(100vw - 110px) !important;
 
-    margin-top: 4px !important;
-    margin-bottom: 6px !important;
+    height: 64px !important;
+    min-height: 64px !important;
 
-    padding-top: 9px !important;
-    padding-bottom: 9px !important;
+    padding-left: 57px !important;
   }
 
   .game-progress::before {
-    width: 24px;
-    height: 24px;
+    left: 16px;
 
-    left: 13px;
+    width: 31px;
+    height: 31px;
 
-    font-size: 16px;
+    font-size: 19px;
   }
 
   .game-progress::after {
-    left: 47px;
+    left: 57px;
+    right: 12px;
 
-    font-size: 10px;
-  }
-
-  .game .info {
-    margin-top: 3px !important;
-    margin-bottom: 5px !important;
-  }
-
-  .game .controls {
-    margin-bottom: 6px !important;
-  }
-
-  .game .controls button {
-    min-height: 37px;
-
-    padding:
-      6px 10px !important;
-
-    font-size:
-      11px !important;
-  }
-
-  .board {
-    max-width:
-      min(
-        calc(100vw - 24px),
-        calc(100svh - 330px)
-      ) !important;
+    font-size: 11px;
   }
 
   .game-screen::after {
-    display: none;
-  }
-}
+    height: 130px;
 
+    margin-top: 18px;
 
-/* =========================================
-   ОЧЕНЬ УЗКИЙ ТЕЛЕФОН
-   ========================================= */
-
-@media (max-width: 380px) {
-
-  .game-screen {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-top: 58px;
   }
 
-  .game-header {
-    column-gap: 5px;
-  }
-
-  .game-header .back-button {
-    padding:
-      8px 10px !important;
-
-    font-size:
-      11px !important;
-  }
-
-  .game-header .coin-display {
-    min-width: 62px;
-    max-width: 68px;
+  .success-modal {
+    width:
+      calc(100vw - 32px) !important;
 
     padding:
-      5px 7px !important;
+      25px 18px 19px !important;
   }
 
-  .game-header .coin-icon {
-    width: 19px;
-    height: 19px;
-    min-width: 19px;
-  }
-
-  .game-header .coin-display > span:nth-child(2) {
-    font-size: 14px !important;
-  }
-
-  .game-progress {
-    width:
-      calc(100% - 72px) !important;
-  }
-
-  .board {
-    width:
-      calc(100vw - 18px) !important;
-
-    max-width:
-      calc(100vw - 18px) !important;
+  .success-modal h2 {
+    font-size: 22px !important;
   }
 }
