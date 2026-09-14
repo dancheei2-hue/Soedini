@@ -17,92 +17,25 @@ function shuffle(array) {
 
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-
     [result[i], result[j]] = [result[j], result[i]];
   }
 
   return result;
 }
 
-function manhattan(a, b, size) {
-  const ar = Math.floor(a / size);
-  const ac = a % size;
-  const br = Math.floor(b / size);
-  const bc = b % size;
-
-  return Math.abs(ar - br) + Math.abs(ac - bc);
-}
-
-
 /*
- * Создаём маршрут через все клетки поля.
- * Каждая клетка используется ровно один раз.
+ * Гарантированный Hamiltonian-маршрут.
+ *
+ * Для квадратного поля используем змейку.
+ * Затем случайно выбираем горизонтальный
+ * или вертикальный вариант.
+ *
+ * Такой маршрут всегда:
+ * - проходит через все клетки;
+ * - не повторяет клетки;
+ * - состоит только из соседних клеток.
  */
 function generateHamiltonianPath(size) {
-  const total = size * size;
-
-  /*
-   * Сначала несколько попыток случайного DFS.
-   */
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const start = Math.floor(Math.random() * total);
-
-    const visited = new Set([start]);
-    const path = [start];
-
-    let nodes = 0;
-    const maxNodes = 20000;
-
-    function dfs(cell) {
-      nodes++;
-
-      if (nodes > maxNodes) {
-        return false;
-      }
-
-      if (path.length === total) {
-        return true;
-      }
-
-      const neighbors = shuffle(
-        getNeighbors(cell, size)
-      )
-        .filter((next) => !visited.has(next))
-        .sort((a, b) => {
-          const degreeA = getNeighbors(a, size)
-            .filter((x) => !visited.has(x))
-            .length;
-
-          const degreeB = getNeighbors(b, size)
-            .filter((x) => !visited.has(x))
-            .length;
-
-          return degreeA - degreeB;
-        });
-
-      for (const next of neighbors) {
-        visited.add(next);
-        path.push(next);
-
-        if (dfs(next)) {
-          return true;
-        }
-
-        path.pop();
-        visited.delete(next);
-      }
-
-      return false;
-    }
-
-    if (dfs(start)) {
-      return path;
-    }
-  }
-
-  /*
-   * Гарантированная змейка.
-   */
   const path = [];
 
   if (Math.random() < 0.5) {
@@ -136,10 +69,17 @@ function generateHamiltonianPath(size) {
 
 
 /*
- * Разрезаем полный маршрут на несколько пар.
+ * Разрезаем полный маршрут на заданное
+ * количество пар.
+ *
+ * Каждая пара получает минимум 2 клетки.
  */
 function splitPath(fullPath, pairCount) {
   const total = fullPath.length;
+
+  if (!Number.isInteger(pairCount)) {
+    return null;
+  }
 
   if (pairCount < 2) {
     return null;
@@ -150,7 +90,6 @@ function splitPath(fullPath, pairCount) {
   }
 
   const lengths = [];
-
   let remaining = total;
 
   for (let i = 0; i < pairCount - 1; i++) {
@@ -164,10 +103,6 @@ function splitPath(fullPath, pairCount) {
       return null;
     }
 
-    /*
-     * Стараемся распределять клетки
-     * между парами относительно равномерно.
-     */
     const average = Math.floor(
       remaining / (pairCount - i)
     );
@@ -195,7 +130,6 @@ function splitPath(fullPath, pairCount) {
   lengths.push(remaining);
 
   const paths = [];
-
   let position = 0;
 
   for (const length of lengths) {
@@ -219,7 +153,7 @@ function splitPath(fullPath, pairCount) {
 function validateLevel(level) {
   const { size, paths } = level;
 
-  if (!Number.isInteger(size)) {
+  if (!Number.isInteger(size) || size < 2) {
     return false;
   }
 
@@ -269,316 +203,6 @@ function validateLevel(level) {
 
 
 /*
- * Превращаем маршрут в битовую маску.
- */
-function pathMask(path) {
-  let mask = 0n;
-
-  for (const cell of path) {
-    mask |= 1n << BigInt(cell);
-  }
-
-  return mask;
-}
-
-
-/*
- * Проверяем, может ли пара пройти
- * из одной точки в другую.
- */
-function canReach(
-  start,
-  target,
-  size,
-  occupied,
-  blocked
-) {
-  const queue = [start];
-  const visited = new Set([start]);
-
-  let head = 0;
-
-  while (head < queue.length) {
-    const cell = queue[head++];
-
-    if (cell === target) {
-      return true;
-    }
-
-    for (const next of getNeighbors(cell, size)) {
-      if (visited.has(next)) {
-        continue;
-      }
-
-      if (
-        occupied.has(next) &&
-        next !== target
-      ) {
-        continue;
-      }
-
-      if (
-        blocked.has(next) &&
-        next !== target
-      ) {
-        continue;
-      }
-
-      visited.add(next);
-      queue.push(next);
-    }
-  }
-
-  return false;
-}
-
-
-/*
- * Проверяем, что все остальные пары
- * хотя бы теоретически ещё могут соединиться.
- */
-function allPairsReachable(
-  paths,
-  currentPairIndex,
-  size,
-  occupied
-) {
-  const blocked = new Set();
-
-  for (let i = 0; i < paths.length; i++) {
-    if (i === currentPairIndex) {
-      continue;
-    }
-
-    blocked.add(paths[i][0]);
-
-    blocked.add(
-      paths[i][paths[i].length - 1]
-    );
-  }
-
-  for (let i = 0; i < paths.length; i++) {
-    if (i === currentPairIndex) {
-      continue;
-    }
-
-    const start = paths[i][0];
-
-    const end =
-      paths[i][paths[i].length - 1];
-
-    if (
-      !canReach(
-        start,
-        end,
-        size,
-        occupied,
-        blocked
-      )
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-/*
- * Ищем альтернативный путь для конкретной пары.
- */
-function findAlternativePath(
-  path,
-  paths,
-  pairIndex,
-  size,
-  deadline
-) {
-  const start = path[0];
-
-  const target =
-    path[path.length - 1];
-
-  const knownMask =
-    pathMask(path);
-
-  const occupied = new Set();
-
-  /*
-   * Все клетки остальных пар считаются занятыми.
-   */
-  for (let i = 0; i < paths.length; i++) {
-    if (i === pairIndex) {
-      continue;
-    }
-
-    for (const cell of paths[i]) {
-      occupied.add(cell);
-    }
-  }
-
-  /*
-   * Конечные точки остальных пар нельзя занимать.
-   */
-  const blocked = new Set();
-
-  for (let i = 0; i < paths.length; i++) {
-    if (i === pairIndex) {
-      continue;
-    }
-
-    blocked.add(paths[i][0]);
-
-    blocked.add(
-      paths[i][paths[i].length - 1]
-    );
-  }
-
-  const visited = new Set([start]);
-  const currentPath = [start];
-
-  let alternative = null;
-  let timedOut = false;
-
-  function dfs(cell) {
-    if (Date.now() > deadline) {
-      timedOut = true;
-      return;
-    }
-
-    if (alternative) {
-      return;
-    }
-
-    if (cell === target) {
-      const mask =
-        pathMask(currentPath);
-
-      if (mask !== knownMask) {
-        alternative = [...currentPath];
-      }
-
-      return;
-    }
-
-    let neighbors = getNeighbors(
-      cell,
-      size
-    );
-
-    neighbors = shuffle(neighbors);
-
-    /*
-     * Сначала рассматриваем клетки,
-     * которые ближе к цели.
-     */
-    neighbors.sort(
-      (a, b) =>
-        manhattan(a, target, size) -
-        manhattan(b, target, size)
-    );
-
-    for (const next of neighbors) {
-      if (alternative || timedOut) {
-        return;
-      }
-
-      if (visited.has(next)) {
-        continue;
-      }
-
-      if (
-        occupied.has(next) &&
-        next !== target
-      ) {
-        continue;
-      }
-
-      if (
-        blocked.has(next) &&
-        next !== target
-      ) {
-        continue;
-      }
-
-      visited.add(next);
-      currentPath.push(next);
-
-      dfs(next);
-
-      currentPath.pop();
-      visited.delete(next);
-    }
-  }
-
-  dfs(start);
-
-  return {
-    alternative,
-    timedOut,
-  };
-}
-
-
-/*
- * Проверяем, не имеет ли уровень
- * очевидного второго решения.
- *
- * Это только быстрый фильтр.
- * Полная проверка выполняется отдельно
- * через npm run solve.
- */
-function hasObviousAlternative(level) {
-  const {
-    size,
-    paths,
-  } = level;
-
-  const deadline =
-    Date.now() +
-    (size <= 6 ? 400 : 700);
-
-  /*
-   * Проверяем пары по очереди.
-   */
-  for (
-    let pairIndex = 0;
-    pairIndex < paths.length;
-    pairIndex++
-  ) {
-    if (
-      Date.now() > deadline
-    ) {
-      return false;
-    }
-
-    const result =
-      findAlternativePath(
-        paths[pairIndex],
-        paths,
-        pairIndex,
-        size,
-        deadline
-      );
-
-    if (
-      result.timedOut
-    ) {
-      return false;
-    }
-
-    if (
-      result.alternative
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
-/*
  * Оценка сложности.
  */
 function calculateDifficulty(level) {
@@ -587,11 +211,8 @@ function calculateDifficulty(level) {
     paths,
   } = level;
 
-  const pairCount =
-    paths.length;
-
-  const totalCells =
-    size * size;
+  const pairCount = paths.length;
+  const totalCells = size * size;
 
   const average =
     totalCells / pairCount;
@@ -607,6 +228,12 @@ function calculateDifficulty(level) {
       0
     ) / pairCount;
 
+  /*
+   * Учитываем:
+   * - размер поля;
+   * - количество пар;
+   * - неравномерность длин маршрутов.
+   */
   const score =
     size * 5 +
     pairCount * 3 +
@@ -629,119 +256,66 @@ function calculateDifficulty(level) {
 
 
 /*
- * ============================================================
- * ГЛАВНАЯ ФУНКЦИЯ
- * ============================================================
+ * Создание одного уровня.
  *
- * scripts/generateLevels.js вызывает:
+ * ВАЖНО:
+ * Здесь нет случайного DFS, который может
+ * закончиться неудачей.
  *
- * generateLevel({
- *   size,
- *   pairCount
- * })
- *
- * Функция должна вернуть:
- *
- * {
- *   size,
- *   paths,
- *   difficulty
- * }
- *
- * либо null, если подходящий вариант
- * не удалось создать.
+ * Поэтому функция должна гарантированно
+ * вернуть уровень при корректных параметрах.
  */
-
 export function generateLevel({
   size = 7,
   pairCount = 5,
 } = {}) {
-  let attempts;
-
-  if (size <= 5) {
-    attempts = 30;
-  } else if (size === 6) {
-    attempts = 35;
-  } else if (size === 7) {
-    attempts = 45;
-  } else if (size === 8) {
-    attempts = 60;
-  } else {
-    attempts = 80;
+  if (!Number.isInteger(size) || size < 2) {
+    return null;
   }
 
-  for (
-    let attempt = 0;
-    attempt < attempts;
-    attempt++
+  if (
+    !Number.isInteger(pairCount) ||
+    pairCount < 2
   ) {
-    /*
-     * Создаём полный маршрут.
-     */
-    const fullPath =
-      generateHamiltonianPath(size);
-
-    if (!fullPath) {
-      continue;
-    }
-
-    /*
-     * Разрезаем его на пары.
-     */
-    const paths =
-      splitPath(
-        fullPath,
-        pairCount
-      );
-
-    if (!paths) {
-      continue;
-    }
-
-    /*
-     * Перемешиваем порядок пар.
-     */
-    const level = {
-      size,
-      paths: shuffle(paths),
-    };
-
-    /*
-     * Проверяем базовую корректность.
-     */
-    if (
-      !validateLevel(level)
-    ) {
-      continue;
-    }
-
-    /*
-     * ВАЖНО:
-     *
-     * Здесь пока НЕ отбраковываем уровень
-     * по полной проверке уникальности.
-     *
-     * Иначе на больших полях генератор
-     * может практически остановиться.
-     *
-     * Уникальность проверяется отдельным
-     * solveLevels.js.
-     */
-
-    return {
-      ...level,
-      difficulty:
-        calculateDifficulty(level),
-    };
+    return null;
   }
 
-  return null;
+  if (pairCount * 2 > size * size) {
+    return null;
+  }
+
+  const fullPath =
+    generateHamiltonianPath(size);
+
+  const paths =
+    splitPath(
+      fullPath,
+      pairCount
+    );
+
+  if (!paths) {
+    return null;
+  }
+
+  const level = {
+    size,
+    paths: shuffle(paths),
+  };
+
+  if (!validateLevel(level)) {
+    return null;
+  }
+
+  return {
+    ...level,
+    difficulty:
+      calculateDifficulty(level),
+  };
 }
 
 
 /*
- * Дополнительная функция для генерации
- * нескольких уровней.
+ * Генерация нескольких уровней.
  */
 export function generateLevels({
   count = 10,
@@ -750,26 +324,21 @@ export function generateLevels({
 } = {}) {
   const result = [];
 
-  let attempts = 0;
-
-  const maxAttempts =
-    count * 100;
-
-  while (
-    result.length < count &&
-    attempts < maxAttempts
-  ) {
-    attempts++;
-
+  for (let i = 0; i < count; i++) {
     const level =
       generateLevel({
         size,
         pairCount,
       });
 
-    if (level) {
-      result.push(level);
+    if (!level) {
+      throw new Error(
+        `Не удалось создать уровень ${i + 1}: ` +
+        `${size}×${size}, ${pairCount} пар`
+      );
     }
+
+    result.push(level);
   }
 
   return result;
