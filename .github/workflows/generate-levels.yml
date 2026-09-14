@@ -25,6 +25,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Sync with main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
       - name: Generate 100 levels
         run: npm run generate
 
@@ -39,15 +44,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin main
-
-          git checkout origin/main -- .github/workflows/generate-levels.yml
-
           git add src/generatedLevels.js
 
           if git diff --cached --quiet; then
             echo "No changes to commit."
-          else
-            git commit -m "Generate 100 levels"
-            git push origin HEAD:main
+            exit 0
           fi
+
+          git commit -m "Generate 100 levels"
+
+          git push origin HEAD:main
