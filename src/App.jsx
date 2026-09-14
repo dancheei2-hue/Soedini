@@ -192,6 +192,24 @@ function App() {
     return completedLevels.includes(index);
   }
 
+  function isStageUnlocked(stage) {
+    return isLevelUnlocked(stage.from - 1);
+  }
+
+  function isStageCompleted(stage) {
+    for (
+      let i = stage.from - 1;
+      i <= stage.to - 1;
+      i += 1
+    ) {
+      if (!completedLevels.includes(i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   function getStageProgress(stage) {
     let count = 0;
 
@@ -807,7 +825,124 @@ function App() {
     completeCurrentLevel();
   }, [completed, level]);
 
+  function renderLockedStage(stage) {
+    const stageIndex =
+      STAGES.indexOf(stage);
+
+    return (
+      <section
+        key={stage.name}
+        className="level-stage"
+      >
+        <div
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            minHeight: 170,
+            padding: 26,
+            borderRadius: 24,
+            border:
+              "1px solid rgba(255,255,255,.07)",
+            background:
+              "linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018))",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            opacity: 0.72,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background: stage.color,
+              opacity: 0.045,
+              filter: "blur(55px)",
+            }}
+          />
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 12,
+              border:
+                "1px solid rgba(255,255,255,.1)",
+              background:
+                "rgba(255,255,255,.045)",
+              color:
+                "rgba(255,255,255,.45)",
+              fontSize: 22,
+            }}
+          >
+            ●
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              color:
+                "rgba(255,255,255,.35)",
+              fontSize: 9,
+              fontWeight: 900,
+              letterSpacing: ".22em",
+              marginBottom: 7,
+            }}
+          >
+            ЭТАП {stageIndex + 1}
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              color:
+                "rgba(255,255,255,.75)",
+              fontSize: 25,
+              lineHeight: 1,
+              fontWeight: 950,
+              letterSpacing: "-.035em",
+            }}
+          >
+            {stage.name}
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              marginTop: 8,
+              color:
+                "rgba(255,255,255,.3)",
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            Пройдите предыдущий этап,
+            <br />
+            чтобы открыть этот
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   function renderStage(stage) {
+    if (!isStageUnlocked(stage)) {
+      return renderLockedStage(stage);
+    }
+
     const count =
       getStageProgress(stage);
 
@@ -959,7 +1094,6 @@ function App() {
     return (
       <div className="app levels-screen">
         <main className="levels-page">
-
           <header className="levels-header">
             <div className="brand">
               СОЕДИНИ
@@ -1034,9 +1168,7 @@ function App() {
   function renderGameScreen() {
     return (
       <div className="app game-screen">
-
         <header className="game-header">
-
           <button
             className="back-button"
             onClick={openLevels}
@@ -1076,13 +1208,10 @@ function App() {
               {coins}
             </span>
           </div>
-
         </header>
 
         <main className="game">
-
           <div className="info">
-
             <div className="stats">
               <span>
                 Линии{" "}
@@ -1101,7 +1230,6 @@ function App() {
             </div>
 
             <div className="controls">
-
               <button
                 onClick={
                   undoLastMove
@@ -1116,7 +1244,8 @@ function App() {
                 {UNDO_COST}{" "}
                 <span
                   style={{
-                    color: "#ffd34d",
+                    color:
+                      "#ffd34d",
                   }}
                 >
                   ●
@@ -1131,7 +1260,8 @@ function App() {
                 {HINT_COST}{" "}
                 <span
                   style={{
-                    color: "#ffd34d",
+                    color:
+                      "#ffd34d",
                   }}
                 >
                   ●
@@ -1139,11 +1269,12 @@ function App() {
               </button>
 
               <button
-                onClick={resetLevel}
+                onClick={
+                  resetLevel
+                }
               >
                 Заново
               </button>
-
             </div>
           </div>
 
@@ -1161,13 +1292,11 @@ function App() {
               handlePointerMove
             }
           >
-
             <svg
               className="lines"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
             >
-
               {connections.map(
                 (path, index) => {
                   const pairIndex =
@@ -1204,7 +1333,6 @@ function App() {
                   )}
                 />
               )}
-
             </svg>
 
             {Array.from({
@@ -1311,7 +1439,6 @@ function App() {
                 );
               }
             )}
-
           </div>
 
           {!showSuccess && (
@@ -1320,7 +1447,6 @@ function App() {
               и веди по клеткам
             </div>
           )}
-
         </main>
 
         {coinMessage && (
@@ -1360,11 +1486,11 @@ function App() {
             }}
           >
             <div className="success-modal">
-
               <div
                 style={{
                   fontSize: 38,
-                  color: "#ffd34d",
+                  color:
+                    "#ffd34d",
                   marginBottom: 10,
                 }}
               >
@@ -1374,7 +1500,8 @@ function App() {
               <h2>
                 Потратить{" "}
                 {pendingAction.cost}{" "}
-                {pendingAction.cost === 1
+                {pendingAction.cost ===
+                1
                   ? "монету"
                   : "монеты"}
                 ?
@@ -1388,7 +1515,6 @@ function App() {
               </p>
 
               <div className="success-actions">
-
                 <button
                   className="success-next"
                   onClick={
@@ -1396,10 +1522,13 @@ function App() {
                   }
                 >
                   Потратить{" "}
-                  {pendingAction.cost}{" "}
+                  {
+                    pendingAction.cost
+                  }{" "}
                   <span
                     style={{
-                      color: "#ffd34d",
+                      color:
+                        "#ffd34d",
                     }}
                   >
                     ●
@@ -1416,146 +1545,387 @@ function App() {
                 >
                   Отмена
                 </button>
-
               </div>
-
             </div>
           </div>
         )}
 
-        {showSuccess && (
-          <div className="success-overlay">
-
-            <div className="confetti">
-              {Array.from({
-                length: 32,
-              }).map(
-                (_, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      "--i": index,
-                      "--delay": `${
-                        (index % 8) *
-                        0.08
-                      }s`,
-                    }}
-                  />
-                )
-              )}
-            </div>
-
-            <div className="success-modal">
-
-              <div className="success-icon">
-                ✓
+        {showSuccess &&
+          successType ===
+            "level" && (
+            <div className="success-overlay">
+              <div className="confetti">
+                {Array.from({
+                  length: 32,
+                }).map(
+                  (_, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        "--i":
+                          index,
+                        "--delay": `${
+                          (index % 8) *
+                          0.08
+                        }s`,
+                      }}
+                    />
+                  )
+                )}
               </div>
 
-              {successType ===
-              "stage" ? (
-                <>
-                  <div
-                    className="success-kicker"
+              <div className="success-modal">
+                <div className="success-icon">
+                  ✓
+                </div>
+
+                <div className="success-kicker">
+                  УРОВЕНЬ{" "}
+                  {level + 1}
+                </div>
+
+                <h2>
+                  Ура!
+                  <br />
+                  Вы прошли
+                  <br />
+                  уровень!
+                </h2>
+
+                <p>
+                  Поле заполнено.
+                  Все пары
+                  соединены.
+                  <br />
+                  <strong
                     style={{
                       color:
-                        currentStage.color,
+                        "#ffd34d",
                     }}
                   >
-                    ЭТАП ЗАВЕРШЁН
-                  </div>
+                    +1 монета
+                  </strong>
+                </p>
 
-                  <h2>
-                    {currentStage.name}
-                    <br />
-                    пройден!
-                  </h2>
-
-                  <p>
-                    Вы прошли уровни{" "}
-                    {currentStage.from}
-                    –
-                    {currentStage.to}.
-                    <br />
-                    <strong
-                      style={{
-                        color:
-                          "#ffd34d",
-                      }}
+                <div className="success-actions">
+                  {level + 1 <
+                    LEVELS.length && (
+                    <button
+                      className="success-next"
+                      onClick={
+                        nextLevel
+                      }
                     >
-                      +1 монета
-                    </strong>
-                    <br />
-                    Впереди новый этап.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="success-kicker">
-                    УРОВЕНЬ{" "}
-                    {level + 1}
-                  </div>
+                      Следующий
+                      уровень
+                      <span>
+                        →
+                      </span>
+                    </button>
+                  )}
 
-                  <h2>
-                    Ура!
-                    <br />
-                    Вы прошли
-                    <br />
-                    уровень!
-                  </h2>
-
-                  <p>
-                    Поле заполнено.
-                    Все пары
-                    соединены.
-                    <br />
-                    <strong
-                      style={{
-                        color:
-                          "#ffd34d",
-                      }}
-                    >
-                      +1 монета
-                    </strong>
-                  </p>
-                </>
-              )}
-
-              <div className="success-actions">
-
-                {level + 1 <
-                  LEVELS.length && (
                   <button
-                    className="success-next"
+                    className="success-levels"
                     onClick={
-                      nextLevel
+                      openLevels
                     }
                   >
-                    {successType ===
-                    "stage"
-                      ? "Начать новый этап"
-                      : "Следующий уровень"}
-
-                    <span>
-                      →
-                    </span>
+                    Все уровни
                   </button>
-                )}
+                </div>
+              </div>
+            </div>
+          )}
 
-                <button
-                  className="success-levels"
-                  onClick={
-                    openLevels
-                  }
-                >
-                  Все уровни
-                </button>
-
+        {showSuccess &&
+          successType ===
+            "stage" && (
+            <div
+              style={{
+                position:
+                  "fixed",
+                inset: 0,
+                zIndex: 400,
+                display: "flex",
+                alignItems:
+                  "center",
+                justifyContent:
+                  "center",
+                padding: 20,
+                background:
+                  "radial-gradient(circle at 50% 35%, rgba(120,110,255,.16), transparent 35%), rgba(5,7,11,.97)",
+                backdropFilter:
+                  "blur(18px)",
+              }}
+            >
+              <div
+                style={{
+                  position:
+                    "absolute",
+                  inset: 0,
+                  overflow:
+                    "hidden",
+                  pointerEvents:
+                    "none",
+                }}
+              >
+                <div
+                  style={{
+                    position:
+                      "absolute",
+                    left: "50%",
+                    top: "42%",
+                    width: 420,
+                    height: 420,
+                    transform:
+                      "translate(-50%,-50%)",
+                    borderRadius:
+                      "50%",
+                    background:
+                      currentStage.color,
+                    opacity:
+                      0.09,
+                    filter:
+                      "blur(90px)",
+                  }}
+                />
               </div>
 
-            </div>
-          </div>
-        )}
+              <div
+                style={{
+                  position:
+                    "relative",
+                  width:
+                    "min(430px, 100%)",
+                  padding:
+                    "42px 28px 30px",
+                  border:
+                    `1px solid ${currentStage.color}55`,
+                  borderRadius: 30,
+                  textAlign:
+                    "center",
+                  background:
+                    "linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035))",
+                  boxShadow:
+                    `0 30px 100px rgba(0,0,0,.6), 0 0 80px ${currentStage.color}18`,
+                  overflow:
+                    "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position:
+                      "absolute",
+                    top: -90,
+                    left: "50%",
+                    width: 230,
+                    height: 230,
+                    transform:
+                      "translateX(-50%)",
+                    borderRadius:
+                      "50%",
+                    border:
+                      `1px solid ${currentStage.color}30`,
+                    boxShadow:
+                      `0 0 0 20px ${currentStage.color}08, 0 0 60px ${currentStage.color}18`,
+                  }}
+                />
 
+                <div
+                  style={{
+                    position:
+                      "relative",
+                    width: 94,
+                    height: 94,
+                    margin:
+                      "0 auto 22px",
+                    borderRadius:
+                      "50%",
+                    display:
+                      "flex",
+                    alignItems:
+                      "center",
+                    justifyContent:
+                      "center",
+                    border:
+                      `2px solid ${currentStage.color}`,
+                    background:
+                      `${currentStage.color}15`,
+                    boxShadow:
+                      `0 0 35px ${currentStage.color}55`,
+                    color:
+                      currentStage.color,
+                    fontSize: 40,
+                    fontWeight: 950,
+                  }}
+                >
+                  ✓
+                </div>
+
+                <div
+                  style={{
+                    color:
+                      currentStage.color,
+                    fontSize: 10,
+                    fontWeight: 950,
+                    letterSpacing:
+                      ".24em",
+                    marginBottom: 12,
+                  }}
+                >
+                  ЭТАП ЗАВЕРШЁН
+                </div>
+
+                <div
+                  style={{
+                    color:
+                      "rgba(255,255,255,.3)",
+                    fontSize: 11,
+                    fontWeight: 850,
+                    letterSpacing:
+                      ".18em",
+                    marginBottom: 8,
+                  }}
+                >
+                  {currentStage.from}
+                  {" — "}
+                  {currentStage.to}
+                </div>
+
+                <h2
+                  style={{
+                    margin:
+                      "0 0 14px",
+                    color:
+                      "#fff",
+                    fontSize:
+                      "clamp(38px, 10vw, 58px)",
+                    lineHeight:
+                      ".9",
+                    fontWeight:
+                      950,
+                    letterSpacing:
+                      "-.055em",
+                  }}
+                >
+                  {currentStage.name}
+                </h2>
+
+                <p
+                  style={{
+                    margin:
+                      "0 auto 26px",
+                    maxWidth:
+                      310,
+                    color:
+                      "rgba(255,255,255,.48)",
+                    fontSize: 13,
+                    lineHeight:
+                      1.55,
+                    fontWeight: 600,
+                  }}
+                >
+                  Вы прошли весь этап.
+                  <br />
+                  Все{" "}
+                  {currentStage.to -
+                    currentStage.from +
+                    1}{" "}
+                  уровней позади.
+                  <br />
+                  <strong
+                    style={{
+                      display:
+                        "inline-block",
+                      marginTop: 10,
+                      color:
+                        "#ffd34d",
+                      fontSize: 15,
+                    }}
+                  >
+                    +1 монета
+                  </strong>
+                </p>
+
+                <div
+                  style={{
+                    display:
+                      "flex",
+                    flexDirection:
+                      "column",
+                    gap: 9,
+                  }}
+                >
+                  {level + 1 <
+                    LEVELS.length && (
+                    <button
+                      onClick={
+                        nextLevel
+                      }
+                      style={{
+                        width:
+                          "100%",
+                        minHeight: 52,
+                        border: 0,
+                        borderRadius:
+                          15,
+                        background:
+                          currentStage.color,
+                        color:
+                          "#090b0f",
+                        fontSize:
+                          13,
+                        fontWeight:
+                          950,
+                        cursor:
+                          "pointer",
+                        boxShadow:
+                          `0 12px 30px ${currentStage.color}30`,
+                      }}
+                    >
+                      НАЧАТЬ НОВЫЙ ЭТАП
+                      <span
+                        style={{
+                          marginLeft: 10,
+                          fontSize:
+                            18,
+                        }}
+                      >
+                        →
+                      </span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={
+                      openLevels
+                    }
+                    style={{
+                      width:
+                        "100%",
+                      minHeight: 48,
+                      border:
+                        "1px solid rgba(255,255,255,.1)",
+                      borderRadius:
+                        15,
+                      background:
+                        "rgba(255,255,255,.045)",
+                      color:
+                        "rgba(255,255,255,.72)",
+                      fontSize:
+                        12,
+                      fontWeight:
+                        850,
+                      cursor:
+                        "pointer",
+                    }}
+                  >
+                    ВСЕ УРОВНИ
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     );
   }
