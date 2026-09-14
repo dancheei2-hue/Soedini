@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { LEVELS } from "./levels.js";
+import { GENERATED_LEVELS } from "./generatedLevels.js";
+
+const LEVELS = GENERATED_LEVELS;
 
 const COLORS = [
   "#ff5c5c",
