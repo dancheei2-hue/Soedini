@@ -1,4 +1,4 @@
-import { LEVELS } from "./levels.js";
+import { GENERATED_LEVELS } from "./generatedLevels.js";
 import { solveLevel } from "./levelSolver.js";
 
 console.log("");
