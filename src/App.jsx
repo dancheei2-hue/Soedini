@@ -110,6 +110,8 @@ function App() {
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [hintCells, setHintCells] = useState([]);
+  const [boardFeedback, setBoardFeedback] = useState(null);
+  const [lastConnectedPair, setLastConnectedPair] = useState(null);
 
   const [completedLevels, setCompletedLevels] = useState(() => {
     const saved = readStoredArray(
@@ -412,6 +414,14 @@ function App() {
     }
   }
 
+  function triggerBoardFeedback(type) {
+    setBoardFeedback(type);
+
+    window.setTimeout(() => {
+      setBoardFeedback(null);
+    }, 360);
+  }
+
   function finishPath(cell) {
     if (!dragging || !activePath) {
       return;
@@ -441,6 +451,15 @@ function App() {
           activePath,
         ]
       );
+
+      setLastConnectedPair(pairIndex);
+      triggerBoardFeedback("success");
+
+      window.setTimeout(() => {
+        setLastConnectedPair(null);
+      }, 260);
+    } else if (activePath.length > 1) {
+      triggerBoardFeedback("error");
     }
 
     setActivePath(null);
@@ -751,6 +770,8 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
+    setBoardFeedback(null);
+    setLastConnectedPair(null);
     setShowSuccess(false);
     setSuccessType("level");
   }
@@ -765,6 +786,8 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
+    setBoardFeedback(null);
+    setLastConnectedPair(null);
     setShowSuccess(false);
     setSuccessType("level");
     setPendingAction(null);
@@ -1172,6 +1195,61 @@ function App() {
   function renderGameScreen() {
     return (
       <div className="app game-screen">
+        <style>{`
+          @keyframes soediniBoardShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(3px); }
+          }
+
+          @keyframes soediniBoardSuccess {
+            0% { transform: scale(1); }
+            45% { transform: scale(1.018); }
+            100% { transform: scale(1); }
+          }
+
+          @keyframes soediniLineComplete {
+            0% { opacity: .55; filter: drop-shadow(0 0 3px currentColor); }
+            50% { opacity: 1; filter: drop-shadow(0 0 7px currentColor) drop-shadow(0 0 17px currentColor); }
+            100% { opacity: .94; filter: drop-shadow(0 0 4px rgba(255,255,255,.15)) drop-shadow(0 0 8px currentColor); }
+          }
+
+          @keyframes soediniDotPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.18); }
+          }
+
+          .board-error {
+            animation: soediniBoardShake .36s ease;
+            border-color: rgba(255, 92, 92, .32) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,.055),
+              0 25px 70px rgba(0,0,0,.38),
+              0 0 35px rgba(255,92,92,.14) !important;
+          }
+
+          .board-success {
+            animation: soediniBoardSuccess .26s ease;
+          }
+
+          .connection-complete {
+            animation: soediniLineComplete .26s ease;
+          }
+
+          .drawing-line {
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+
+          .board-success .dot {
+            animation:
+              dotAppear .25s cubic-bezier(.2,.8,.2,1) both,
+              soediniDotPulse .26s ease .02s;
+          }
+        `}</style>
+
         <header className="game-header">
           <button
             className="back-button"
@@ -1284,7 +1362,13 @@ function App() {
 
           <div
             ref={boardRef}
-            className="board"
+            className={`board ${
+              boardFeedback === "error"
+                ? "board-error"
+                : boardFeedback === "success"
+                ? "board-success"
+                : ""
+            }`}
             style={{
               gridTemplateColumns:
                 `repeat(${current.size}, 1fr)`,
@@ -1313,7 +1397,11 @@ function App() {
                       points={pathPoints(
                         path
                       )}
-                      className="connection-line"
+                      className={`connection-line ${
+                        pairIndex === lastConnectedPair
+                          ? "connection-complete"
+                          : ""
+                      }`}
                       stroke={
                         COLORS[
                           pairIndex %
@@ -1330,7 +1418,7 @@ function App() {
                   points={pathPoints(
                     activePath
                   )}
-                  className="connection-line active-line"
+                  className="connection-line active-line drawing-line"
                   stroke={getColor(
                     activePath[0]
                   )}
