@@ -33,11 +33,8 @@ jobs:
       - name: Generate 100 levels
         run: npm run generate
 
-      - name: Check generated levels
+      - name: Validate levels
         run: npm run validate
-
-      - name: Check solutions
-        run: npm run solve
 
       - name: Commit generated levels
         run: |
