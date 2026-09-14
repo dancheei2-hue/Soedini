@@ -12,40 +12,131 @@ const COLORS = [
   "#ff8fab",
 ];
 
-const STORAGE_KEY = "soedini-completed-levels";
+const COMPLETED_STORAGE_KEY = "soedini-completed-levels";
+const COINS_STORAGE_KEY = "soedini-coins";
+
+const STAGES = [
+  {
+    name: "СТАРТ",
+    from: 1,
+    to: 10,
+    description: "Знакомство с игрой",
+    color: "#6bcb77",
+  },
+  {
+    name: "РАЗМИНКА",
+    from: 11,
+    to: 25,
+    description: "Первые серьёзные задачи",
+    color: "#4d96ff",
+  },
+  {
+    name: "НАПРЯЖЕНИЕ",
+    from: 26,
+    to: 45,
+    description: "Придётся подумать",
+    color: "#ffd93d",
+  },
+  {
+    name: "СЛОЖНО",
+    from: 46,
+    to: 70,
+    description: "Для внимательных",
+    color: "#ff8c42",
+  },
+  {
+    name: "МАСТЕР",
+    from: 71,
+    to: 100,
+    description: "Настоящий вызов",
+    color: "#a66cff",
+  },
+];
+
+const HINT_COST = 2;
+const UNDO_COST = 1;
+
+function readStoredArray(key) {
+  try {
+    const saved = localStorage.getItem(key);
+
+    if (!saved) {
+      return [];
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function readStoredCoins() {
+  try {
+    const saved = localStorage.getItem(COINS_STORAGE_KEY);
+
+    if (saved === null) {
+      return 0;
+    }
+
+    const value = Number(saved);
+
+    return Number.isFinite(value)
+      ? Math.max(0, Math.floor(value))
+      : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function getStageForLevel(index) {
+  const levelNumber = index + 1;
+
+  return (
+    STAGES.find(
+      (stage) =>
+        levelNumber >= stage.from &&
+        levelNumber <= stage.to
+    ) || STAGES[0]
+  );
+}
 
 function App() {
   const [screen, setScreen] = useState("levels");
   const [level, setLevel] = useState(0);
+
   const [connections, setConnections] = useState([]);
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [hintCells, setHintCells] = useState([]);
+
   const [completedLevels, setCompletedLevels] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = readStoredArray(
+      COMPLETED_STORAGE_KEY
+    );
 
-      if (!saved) {
-        return [];
-      }
-
-      const parsed = JSON.parse(saved);
-
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      return parsed.filter(
+    return saved
+      .filter(
         (value) =>
           Number.isInteger(value) &&
           value >= 0 &&
           value < LEVELS.length
-      );
-    } catch {
-      return [];
-    }
+      )
+      .sort((a, b) => a - b);
   });
+
+  const [coins, setCoins] = useState(
+    readStoredCoins
+  );
+
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successType, setSuccessType] = useState("level");
+
+  const [coinMessage, setCoinMessage] = useState(null);
+
+  const [pendingAction, setPendingAction] =
+    useState(null);
 
   const boardRef = useRef(null);
   const cellRefs = useRef({});
@@ -57,7 +148,8 @@ function App() {
   }
 
   const totalPairs = current.paths.length;
-  const totalCells = current.size * current.size;
+  const totalCells =
+    current.size * current.size;
 
   const usedCells = connections.reduce(
     (sum, path) => sum + path.length,
@@ -66,22 +158,91 @@ function App() {
 
   const endpointToPair = new Map();
 
-  current.paths.forEach((path, pairIndex) => {
-    endpointToPair.set(path[0], pairIndex);
-    endpointToPair.set(
-      path[path.length - 1],
-      pairIndex
+  current.paths.forEach(
+    (path, pairIndex) => {
+      endpointToPair.set(
+        path[0],
+        pairIndex
+      );
+
+      endpointToPair.set(
+        path[path.length - 1],
+        pairIndex
+      );
+    }
+  );
+
+  const completed =
+    connections.length === totalPairs &&
+    usedCells === totalCells;
+
+  const progress = Math.min(
+    100,
+    Math.round(
+      (usedCells / totalCells) * 100
+    )
+  );
+
+  const currentStage =
+    getStageForLevel(level);
+
+  function getHighestUnlockedLevel() {
+    let highest = 0;
+
+    while (
+      completedLevels.includes(highest) &&
+      highest + 1 < LEVELS.length
+    ) {
+      highest += 1;
+    }
+
+    return highest;
+  }
+
+  function isLevelUnlocked(index) {
+    return (
+      index <= getHighestUnlockedLevel()
     );
-  });
+  }
+
+  function isLevelCompleted(index) {
+    return completedLevels.includes(index);
+  }
+
+  function getStageProgress(stage) {
+    let count = 0;
+
+    for (
+      let i = stage.from - 1;
+      i <= stage.to - 1;
+      i += 1
+    ) {
+      if (completedLevels.includes(i)) {
+        count += 1;
+      }
+    }
+
+    return count;
+  }
+
+  function isStageCompleted(stage) {
+    return (
+      getStageProgress(stage) ===
+      stage.to - stage.from + 1
+    );
+  }
 
   function isEndpoint(cell) {
     return endpointToPair.has(cell);
   }
 
   function getColor(cell) {
-    const pairIndex = endpointToPair.get(cell);
+    const pairIndex =
+      endpointToPair.get(cell);
 
-    return COLORS[pairIndex % COLORS.length];
+    return COLORS[
+      pairIndex % COLORS.length
+    ];
   }
 
   function isOccupied(cell) {
@@ -91,10 +252,14 @@ function App() {
   }
 
   function areAdjacent(a, b) {
-    const ar = Math.floor(a / current.size);
+    const ar = Math.floor(
+      a / current.size
+    );
     const ac = a % current.size;
 
-    const br = Math.floor(b / current.size);
+    const br = Math.floor(
+      b / current.size
+    );
     const bc = b % current.size;
 
     return (
@@ -106,7 +271,8 @@ function App() {
 
   function pointForCell(cell) {
     const board = boardRef.current;
-    const element = cellRefs.current[cell];
+    const element =
+      cellRefs.current[cell];
 
     if (!board || !element) {
       return null;
@@ -165,7 +331,9 @@ function App() {
     }
 
     const last =
-      activePath[activePath.length - 1];
+      activePath[
+        activePath.length - 1
+      ];
 
     if (cell === last) {
       return;
@@ -181,6 +349,7 @@ function App() {
       setActivePath(
         activePath.slice(0, -1)
       );
+
       return;
     }
 
@@ -257,8 +426,8 @@ function App() {
       current.paths[pairIndex][0] ===
       activePath[0]
         ? current.paths[pairIndex][
-            current.paths[pairIndex].length -
-              1
+            current.paths[pairIndex]
+              .length - 1
           ]
         : current.paths[pairIndex][0];
 
@@ -266,10 +435,12 @@ function App() {
       cell === target &&
       activePath.length >= 2
     ) {
-      setConnections((previous) => [
-        ...previous,
-        activePath,
-      ]);
+      setConnections(
+        (previous) => [
+          ...previous,
+          activePath,
+        ]
+      );
     }
 
     setActivePath(null);
@@ -347,34 +518,105 @@ function App() {
     };
   }, [dragging]);
 
-  function undoLastMove() {
-    if (
-      connections.length === 0 ||
-      dragging
-    ) {
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        COMPLETED_STORAGE_KEY,
+        JSON.stringify(completedLevels)
+      );
+    } catch {
+      // Прогресс останется в памяти.
+    }
+  }, [completedLevels]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        COINS_STORAGE_KEY,
+        String(coins)
+      );
+    } catch {
+      // Монеты останутся в памяти.
+    }
+  }, [coins]);
+
+  function showCoinMessage(text) {
+    setCoinMessage(text);
+
+    window.setTimeout(() => {
+      setCoinMessage(null);
+    }, 1800);
+  }
+
+  function spendCoins(amount, action) {
+    if (coins < amount) {
+      showCoinMessage(
+        "Недостаточно монет"
+      );
+
+      return false;
+    }
+
+    setPendingAction({
+      type: action,
+      cost: amount,
+    });
+
+    return true;
+  }
+
+  function confirmPendingAction() {
+    if (!pendingAction) {
       return;
     }
 
-    setConnections((previous) =>
-      previous.slice(0, -1)
+    const {
+      type,
+      cost,
+    } = pendingAction;
+
+    if (coins < cost) {
+      setPendingAction(null);
+      showCoinMessage(
+        "Недостаточно монет"
+      );
+      return;
+    }
+
+    setCoins(
+      (previous) =>
+        previous - cost
     );
+
+    setPendingAction(null);
+
+    if (type === "hint") {
+      revealHint();
+    }
+
+    if (type === "undo") {
+      performUndo();
+    }
   }
 
-  function addHint() {
+  function revealHint() {
     const availablePaths =
       current.paths
-        .map((path, pairIndex) => ({
-          path,
-          pairIndex,
-        }))
-        .filter(({ pairIndex }) => {
-          return !connections.some(
-            (connection) =>
-              endpointToPair.get(
-                connection[0]
-              ) === pairIndex
-          );
-        });
+        .map(
+          (path, pairIndex) => ({
+            path,
+            pairIndex,
+          })
+        )
+        .filter(
+          ({ pairIndex }) =>
+            !connections.some(
+              (connection) =>
+                endpointToPair.get(
+                  connection[0]
+                ) === pairIndex
+            )
+        );
 
     for (const {
       path,
@@ -415,9 +657,93 @@ function App() {
           ]
         );
 
+        showCoinMessage(
+          `−${HINT_COST} монеты`
+        );
+
         return;
       }
     }
+
+    showCoinMessage(
+      "Больше подсказок нет"
+    );
+  }
+
+  function addHint() {
+    if (dragging) {
+      return;
+    }
+
+    const hasAvailableHint =
+      current.paths.some(
+        (path, pairIndex) => {
+          const connected =
+            connections.some(
+              (connection) =>
+                endpointToPair.get(
+                  connection[0]
+                ) === pairIndex
+            );
+
+          if (connected) {
+            return false;
+          }
+
+          const middleCells =
+            path.slice(1, -1);
+
+          const revealed =
+            hintCells.filter(
+              (hint) =>
+                hint.pairIndex ===
+                pairIndex
+            );
+
+          return (
+            revealed.length <
+            middleCells.length
+          );
+        }
+      );
+
+    if (!hasAvailableHint) {
+      showCoinMessage(
+        "Больше подсказок нет"
+      );
+
+      return;
+    }
+
+    spendCoins(
+      HINT_COST,
+      "hint"
+    );
+  }
+
+  function performUndo() {
+    setConnections(
+      (previous) =>
+        previous.slice(0, -1)
+    );
+
+    showCoinMessage(
+      `−${UNDO_COST} монета`
+    );
+  }
+
+  function undoLastMove() {
+    if (
+      connections.length === 0 ||
+      dragging
+    ) {
+      return;
+    }
+
+    spendCoins(
+      UNDO_COST,
+      "undo"
+    );
   }
 
   function resetLevel() {
@@ -426,10 +752,11 @@ function App() {
     setDragging(false);
     setHintCells([]);
     setShowSuccess(false);
+    setSuccessType("level");
   }
 
   function openLevel(index) {
-    if (index > getHighestUnlockedLevel()) {
+    if (!isLevelUnlocked(index)) {
       return;
     }
 
@@ -439,6 +766,8 @@ function App() {
     setDragging(false);
     setHintCells([]);
     setShowSuccess(false);
+    setSuccessType("level");
+    setPendingAction(null);
     setScreen("game");
   }
 
@@ -446,96 +775,194 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setShowSuccess(false);
+    setPendingAction(null);
     setScreen("levels");
-  }
-
-  function getHighestUnlockedLevel() {
-    let highest = 0;
-
-    while (
-      completedLevels.includes(
-        highest
-      ) &&
-      highest + 1 < LEVELS.length
-    ) {
-      highest += 1;
-    }
-
-    return highest;
-  }
-
-  function isLevelUnlocked(index) {
-    return (
-      index <=
-      getHighestUnlockedLevel()
-    );
-  }
-
-  function isLevelCompleted(index) {
-    return completedLevels.includes(
-      index
-    );
   }
 
   function nextLevel() {
     setShowSuccess(false);
 
-    if (level + 1 < LEVELS.length) {
+    if (
+      level + 1 <
+      LEVELS.length
+    ) {
       setLevel(level + 1);
       setConnections([]);
       setActivePath(null);
       setDragging(false);
       setHintCells([]);
+      setSuccessType("level");
       setScreen("game");
     } else {
       setScreen("levels");
     }
   }
 
-  const completed =
-    connections.length ===
-      totalPairs &&
-    usedCells === totalCells;
+  function completeCurrentLevel() {
+    const alreadyCompleted =
+      completedLevels.includes(level);
 
-  const progress = Math.min(
-    100,
-    Math.round(
-      (usedCells / totalCells) *
-        100
-    )
-  );
+    if (!alreadyCompleted) {
+      setCompletedLevels(
+        (previous) => [
+          ...previous,
+          level,
+        ].sort(
+          (a, b) => a - b
+        )
+      );
+
+      setCoins(
+        (previous) =>
+          previous + 1
+      );
+
+      showCoinMessage(
+        "+1 монета"
+      );
+    }
+
+    const stage =
+      getStageForLevel(level);
+
+    const finishingStage =
+      level + 1 === stage.to;
+
+    setSuccessType(
+      finishingStage
+        ? "stage"
+        : "level"
+    );
+
+    setShowSuccess(true);
+  }
 
   useEffect(() => {
     if (!completed) {
       return;
     }
 
-    setCompletedLevels(
-      (previous) => {
-        if (previous.includes(level)) {
-          return previous;
-        }
-
-        const next = [
-          ...previous,
-          level,
-        ].sort((a, b) => a - b);
-
-        try {
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(next)
-          );
-        } catch {
-          // Прогресс останется в памяти
-        }
-
-        return next;
-      }
-    );
-
-    setShowSuccess(true);
+    completeCurrentLevel();
   }, [completed, level]);
+
+  function renderStageHeader(stage) {
+    const stageCount =
+      getStageProgress(stage);
+
+    const stageTotal =
+      stage.to - stage.from + 1;
+
+    const stagePercent =
+      Math.round(
+        (stageCount /
+          stageTotal) *
+          100
+      );
+
+    return (
+      <div
+        style={{
+          marginBottom: 22,
+          padding: 20,
+          borderRadius: 20,
+          border: `1px solid ${stage.color}33`,
+          background:
+            "rgba(20, 23, 31, 0.85)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent:
+              "space-between",
+            gap: 12,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                color: stage.color,
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 3,
+              }}
+            >
+              ЭТАП
+            </div>
+
+            <div
+              style={{
+                marginTop: 5,
+                fontSize: 25,
+                fontWeight: 900,
+              }}
+            >
+              {stage.name}
+            </div>
+
+            <div
+              style={{
+                marginTop: 4,
+                color: "#7c8392",
+                fontSize: 13,
+              }}
+            >
+              {stage.description}
+            </div>
+          </div>
+
+          <div
+            style={{
+              textAlign: "right",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+              }}
+            >
+              {stageCount} /{" "}
+              {stageTotal}
+            </div>
+
+            <div
+              style={{
+                marginTop: 4,
+                color: "#737987",
+                fontSize: 11,
+              }}
+            >
+              уровней
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            height: 6,
+            marginTop: 16,
+            overflow: "hidden",
+            borderRadius: 999,
+            background: "#292e39",
+          }}
+        >
+          <div
+            style={{
+              width: `${stagePercent}%`,
+              height: "100%",
+              borderRadius: 999,
+              background:
+                stage.color,
+              transition:
+                "width .4s ease",
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   function renderLevelsScreen() {
     const completedCount =
@@ -558,9 +985,51 @@ function App() {
             </h1>
 
             <p>
-              Соединяйте одинаковые точки
-              и заполните всё поле.
+              Соединяйте одинаковые
+              точки и заполните всё
+              поле.
             </p>
+
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 18,
+                padding:
+                  "9px 15px",
+                border:
+                  "1px solid #3a3f4b",
+                borderRadius: 999,
+                background:
+                  "#151820",
+                fontWeight: 900,
+              }}
+            >
+              <span
+                style={{
+                  color: "#ffd34d",
+                  fontSize: 17,
+                }}
+              >
+                ●
+              </span>
+
+              <span>
+                {coins}
+              </span>
+
+              <span
+                style={{
+                  color: "#777e8e",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                }}
+              >
+                МОНЕТ
+              </span>
+            </div>
           </div>
 
           <div className="levels-progress">
@@ -580,96 +1049,119 @@ function App() {
                 className="progress-fill"
                 style={{
                   width: `${
-                    LEVELS.length
-                      ? (completedCount /
-                          LEVELS.length) *
-                        100
-                      : 0
+                    (completedCount /
+                      LEVELS.length) *
+                    100
                   }%`,
                 }}
               />
             </div>
           </div>
 
-          <div className="level-grid">
-            {LEVELS.map(
-              (_, index) => {
-                const unlocked =
-                  isLevelUnlocked(
-                    index
-                  );
+          {STAGES.map(
+            (stage) => (
+              <section
+                key={stage.name}
+                style={{
+                  marginBottom: 34,
+                }}
+              >
+                {renderStageHeader(
+                  stage
+                )}
 
-                const isCompleted =
-                  isLevelCompleted(
-                    index
-                  );
+                <div className="level-grid">
+                  {LEVELS.slice(
+                    stage.from - 1,
+                    stage.to
+                  ).map(
+                    (_, localIndex) => {
+                      const index =
+                        stage.from -
+                        1 +
+                        localIndex;
 
-                const isNext =
-                  unlocked &&
-                  !isCompleted &&
-                  index ===
-                    getHighestUnlockedLevel();
+                      const unlocked =
+                        isLevelUnlocked(
+                          index
+                        );
 
-                return (
-                  <button
-                    key={index}
-                    className={[
-                      "level-card",
-                      unlocked
-                        ? "unlocked"
-                        : "locked",
-                      isCompleted
-                        ? "completed"
-                        : "",
-                      isNext
-                        ? "next-level"
-                        : "",
-                    ].join(" ")}
-                    onClick={() =>
-                      openLevel(
-                        index
-                      )
+                      const isCompleted =
+                        isLevelCompleted(
+                          index
+                        );
+
+                      const isNext =
+                        unlocked &&
+                        !isCompleted &&
+                        index ===
+                          getHighestUnlockedLevel();
+
+                      return (
+                        <button
+                          key={index}
+                          className={[
+                            "level-card",
+                            unlocked
+                              ? "unlocked"
+                              : "locked",
+                            isCompleted
+                              ? "completed"
+                              : "",
+                            isNext
+                              ? "next-level"
+                              : "",
+                          ].join(
+                            " "
+                          )}
+                          onClick={() =>
+                            openLevel(
+                              index
+                            )
+                          }
+                          disabled={
+                            !unlocked
+                          }
+                        >
+                          <span className="level-number">
+                            {index + 1}
+                          </span>
+
+                          {isCompleted ? (
+                            <span className="level-status completed-status">
+                              ✓
+                            </span>
+                          ) : unlocked ? (
+                            <span className="level-status play-status">
+                              →
+                            </span>
+                          ) : (
+                            <span className="level-status lock-status">
+                              ●
+                            </span>
+                          )}
+
+                          <span className="level-label">
+                            {isCompleted
+                              ? "Пройден"
+                              : unlocked
+                              ? "Играть"
+                              : "Закрыт"}
+                          </span>
+                        </button>
+                      );
                     }
-                    disabled={
-                      !unlocked
-                    }
-                  >
-                    <span className="level-number">
-                      {index + 1}
-                    </span>
-
-                    {isCompleted ? (
-                      <span className="level-status completed-status">
-                        ✓
-                      </span>
-                    ) : unlocked ? (
-                      <span className="level-status play-status">
-                        →
-                      </span>
-                    ) : (
-                      <span className="level-status lock-status">
-                        ●
-                      </span>
-                    )}
-
-                    <span className="level-label">
-                      {isCompleted
-                        ? "Пройден"
-                        : unlocked
-                        ? "Играть"
-                        : "Закрыт"}
-                    </span>
-                  </button>
-                );
-              }
-            )}
-          </div>
+                  )}
+                </div>
+              </section>
+            )
+          )}
 
           <div className="levels-footer">
             <span>
-              Новый уровень
-              открывается после
-              прохождения предыдущего
+              За каждый новый
+              пройденный уровень —
+              +1 монета
             </span>
           </div>
         </main>
@@ -694,6 +1186,8 @@ function App() {
             </div>
 
             <div className="game-level">
+              {currentStage.name}
+              {" · "}
               УРОВЕНЬ{" "}
               <strong>
                 {level + 1}
@@ -701,8 +1195,22 @@ function App() {
             </div>
           </div>
 
-          <div className="game-progress">
-            {progress}%
+          <div
+            className="game-progress"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                color: "#ffd34d",
+              }}
+            >
+              ●
+            </span>
+            {coins}
           </div>
         </header>
 
@@ -736,14 +1244,34 @@ function App() {
                   dragging
                 }
               >
-                ← Назад
+                ← Назад ·{" "}
+                {UNDO_COST}
+                {" "}
+                <span
+                  style={{
+                    color:
+                      "#ffd34d",
+                  }}
+                >
+                  ●
+                </span>
               </button>
 
               <button
                 onClick={addHint}
                 disabled={dragging}
               >
-                Подсказка
+                Подсказка ·{" "}
+                {HINT_COST}
+                {" "}
+                <span
+                  style={{
+                    color:
+                      "#ffd34d",
+                  }}
+                >
+                  ●
+                </span>
               </button>
 
               <button
@@ -812,133 +1340,261 @@ function App() {
 
             {Array.from({
               length: totalCells,
-            }).map((_, index) => {
-              const endpoint =
-                isEndpoint(index);
+            }).map(
+              (_, index) => {
+                const endpoint =
+                  isEndpoint(index);
 
-              const connected =
-                connections.some(
-                  (path) =>
-                    path.includes(
-                      index
-                    )
-                );
-
-              const active =
-                activePath?.includes(
-                  index
-                );
-
-              const color = endpoint
-                ? getColor(index)
-                : null;
-
-              const hint =
-                hintCells.find(
-                  (item) =>
-                    item.cell ===
-                    index
-                );
-
-              return (
-                <button
-                  key={index}
-                  ref={(element) => {
-                    if (element) {
-                      cellRefs.current[
+                const connected =
+                  connections.some(
+                    (path) =>
+                      path.includes(
                         index
-                      ] = element;
-                    }
-                  }}
-                  data-cell={index}
-                  className={`cell ${
-                    endpoint
-                      ? "endpoint"
-                      : ""
-                  } ${
-                    connected
-                      ? "connected"
-                      : ""
-                  } ${
-                    active
-                      ? "active"
-                      : ""
-                  }`}
-                  onPointerDown={(
-                    event
-                  ) =>
-                    handlePointerDown(
-                      event,
-                      index
-                    )
-                  }
-                  onPointerUp={
-                    handlePointerUp
-                  }
-                  style={
-                    endpoint
-                      ? {
-                          "--dot-color":
-                            color,
-                        }
-                      : undefined
-                  }
-                  aria-label={`Клетка ${
-                    index + 1
-                  }`}
-                >
-                  {endpoint && (
-                    <span
-                      className="dot"
-                      style={{
-                        backgroundColor:
-                          color,
-                      }}
-                    />
-                  )}
+                      )
+                  );
 
-                  {hint && (
-                    <span
-                      className="hint-dot"
-                      style={{
-                        backgroundColor:
-                          COLORS[
-                            hint.pairIndex %
-                              COLORS.length
-                          ],
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
+                const active =
+                  activePath?.includes(
+                    index
+                  );
+
+                const color =
+                  endpoint
+                    ? getColor(
+                        index
+                      )
+                    : null;
+
+                const hint =
+                  hintCells.find(
+                    (item) =>
+                      item.cell ===
+                      index
+                  );
+
+                return (
+                  <button
+                    key={index}
+                    ref={(
+                      element
+                    ) => {
+                      if (element) {
+                        cellRefs.current[
+                          index
+                        ] =
+                          element;
+                      }
+                    }}
+                    data-cell={index}
+                    className={`cell ${
+                      endpoint
+                        ? "endpoint"
+                        : ""
+                    } ${
+                      connected
+                        ? "connected"
+                        : ""
+                    } ${
+                      active
+                        ? "active"
+                        : ""
+                    }`}
+                    onPointerDown={(
+                      event
+                    ) =>
+                      handlePointerDown(
+                        event,
+                        index
+                      )
+                    }
+                    onPointerUp={
+                      handlePointerUp
+                    }
+                    style={
+                      endpoint
+                        ? {
+                            "--dot-color":
+                              color,
+                          }
+                        : undefined
+                    }
+                    aria-label={`Клетка ${
+                      index + 1
+                    }`}
+                  >
+                    {endpoint && (
+                      <span
+                        className="dot"
+                        style={{
+                          backgroundColor:
+                            color,
+                        }}
+                      />
+                    )}
+
+                    {hint && (
+                      <span
+                        className="hint-dot"
+                        style={{
+                          backgroundColor:
+                            COLORS[
+                              hint.pairIndex %
+                                COLORS.length
+                            ],
+                        }}
+                      />
+                    )}
+                  </button>
+                );
+              }
+            )}
           </div>
 
           {!showSuccess && (
             <div className="hint">
-              Зажми цветную точку и
-              веди по клеткам
+              Зажми цветную точку
+              и веди по клеткам
             </div>
           )}
         </main>
+
+        {coinMessage && (
+          <div
+            style={{
+              position: "fixed",
+              left: "50%",
+              bottom: 28,
+              zIndex: 300,
+              transform:
+                "translateX(-50%)",
+              padding:
+                "11px 18px",
+              border:
+                "1px solid #3a404c",
+              borderRadius: 999,
+              background:
+                "#191d26",
+              boxShadow:
+                "0 12px 40px rgba(0,0,0,.45)",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: 14,
+              animation:
+                "modalIn .25s ease",
+              whiteSpace:
+                "nowrap",
+            }}
+          >
+            {coinMessage}
+          </div>
+        )}
+
+        {pendingAction && (
+          <div
+            className="success-overlay"
+            style={{
+              zIndex: 250,
+            }}
+          >
+            <div
+              className="success-modal"
+              style={{
+                maxWidth: 390,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 38,
+                  color: "#ffd34d",
+                  marginBottom: 10,
+                }}
+              >
+                ●
+              </div>
+
+              <h2
+                style={{
+                  fontSize: 28,
+                }}
+              >
+                Потратить{" "}
+                {pendingAction.cost}{" "}
+                {pendingAction.cost ===
+                1
+                  ? "монету"
+                  : "монеты"}
+                ?
+              </h2>
+
+              <p>
+                {pendingAction.type ===
+                "hint"
+                  ? "Откроется следующая клетка правильного пути."
+                  : "Последняя соединённая линия будет отменена."}
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection:
+                    "column",
+                  gap: 10,
+                  marginTop: 20,
+                }}
+              >
+                <button
+                  className="success-next"
+                  onClick={
+                    confirmPendingAction
+                  }
+                >
+                  Потратить{" "}
+                  {pendingAction.cost}{" "}
+                  <span
+                    style={{
+                      color:
+                        "#ffd34d",
+                    }}
+                  >
+                    ●
+                  </span>
+                </button>
+
+                <button
+                  className="success-levels"
+                  onClick={() =>
+                    setPendingAction(
+                      null
+                    )
+                  }
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showSuccess && (
           <div className="success-overlay">
             <div className="confetti">
               {Array.from({
-                length: 28,
-              }).map((_, index) => (
-                <span
-                  key={index}
-                  style={{
-                    "--i": index,
-                    "--delay": `${
-                      (index % 7) *
-                      0.08
-                    }s`,
-                  }}
-                />
-              ))}
+                length: 32,
+              }).map(
+                (_, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      "--i":
+                        index,
+                      "--delay": `${
+                        (index % 8) *
+                        0.08
+                      }s`,
+                    }}
+                  />
+                )
+              )}
             </div>
 
             <div className="success-modal">
@@ -946,20 +1602,65 @@ function App() {
                 ✓
               </div>
 
-              <div className="success-kicker">
-                УРОВЕНЬ {level + 1}
-              </div>
+              {successType ===
+              "stage" ? (
+                <>
+                  <div
+                    className="success-kicker"
+                    style={{
+                      color:
+                        currentStage.color,
+                    }}
+                  >
+                    ЭТАП ЗАВЕРШЁН
+                  </div>
 
-              <h2>
-                Ура!
-                <br />
-                Вы прошли уровень!
-              </h2>
+                  <h2>
+                    {currentStage.name}
+                    <br />
+                    пройден!
+                  </h2>
 
-              <p>
-                Поле заполнено.
-                Все пары соединены.
-              </p>
+                  <p>
+                    Вы прошли уровни{" "}
+                    {currentStage.from}
+                    –
+                    {currentStage.to}.
+                    <br />
+                    Впереди новый
+                    этап.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="success-kicker">
+                    УРОВЕНЬ{" "}
+                    {level + 1}
+                  </div>
+
+                  <h2>
+                    Ура!
+                    <br />
+                    Вы прошли
+                    уровень!
+                  </h2>
+
+                  <p>
+                    Поле заполнено.
+                    Все пары
+                    соединены.
+                    <br />
+                    <strong
+                      style={{
+                        color:
+                          "#ffd34d",
+                      }}
+                    >
+                      +1 монета
+                    </strong>
+                  </p>
+                </>
+              )}
 
               <div className="success-actions">
                 {level + 1 <
@@ -970,8 +1671,13 @@ function App() {
                       nextLevel
                     }
                   >
-                    Следующий уровень
-                    <span>→</span>
+                    {successType ===
+                    "stage"
+                      ? "Начать новый этап"
+                      : "Следующий уровень"}
+                    <span>
+                      →
+                    </span>
                   </button>
                 )}
 
