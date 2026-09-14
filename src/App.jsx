@@ -15,6 +15,9 @@ const COLORS = [
 const COMPLETED_STORAGE_KEY = "soedini-completed-levels";
 const COINS_STORAGE_KEY = "soedini-coins";
 
+const HINT_COST = 2;
+const UNDO_COST = 1;
+
 const STAGES = [
   {
     name: "СТАРТ",
@@ -53,9 +56,6 @@ const STAGES = [
   },
 ];
 
-const HINT_COST = 2;
-const UNDO_COST = 1;
-
 function readStoredArray(key) {
   try {
     const saved = localStorage.getItem(key);
@@ -82,9 +82,11 @@ function readStoredCoins() {
 
     const value = Number(saved);
 
-    return Number.isFinite(value)
-      ? Math.max(0, Math.floor(value))
-      : 0;
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.floor(value));
   } catch {
     return 0;
   }
@@ -109,16 +111,11 @@ function App() {
   const [connections, setConnections] = useState([]);
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
+
   const [hintCells, setHintCells] = useState([]);
-  const [boardFeedback, setBoardFeedback] = useState(null);
-  const [lastConnectedPair, setLastConnectedPair] = useState(null);
 
   const [completedLevels, setCompletedLevels] = useState(() => {
-    const saved = readStoredArray(
-      COMPLETED_STORAGE_KEY
-    );
-
-    return saved
+    return readStoredArray(COMPLETED_STORAGE_KEY)
       .filter(
         (value) =>
           Number.isInteger(value) &&
@@ -128,17 +125,13 @@ function App() {
       .sort((a, b) => a - b);
   });
 
-  const [coins, setCoins] = useState(
-    readStoredCoins
-  );
+  const [coins, setCoins] = useState(readStoredCoins);
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [successType, setSuccessType] = useState("level");
 
+  const [pendingAction, setPendingAction] = useState(null);
   const [coinMessage, setCoinMessage] = useState(null);
-
-  const [pendingAction, setPendingAction] =
-    useState(null);
 
   const boardRef = useRef(null);
   const cellRefs = useRef({});
@@ -150,8 +143,7 @@ function App() {
   }
 
   const totalPairs = current.paths.length;
-  const totalCells =
-    current.size * current.size;
+  const totalCells = current.size * current.size;
 
   const usedCells = connections.reduce(
     (sum, path) => sum + path.length,
@@ -160,19 +152,13 @@ function App() {
 
   const endpointToPair = new Map();
 
-  current.paths.forEach(
-    (path, pairIndex) => {
-      endpointToPair.set(
-        path[0],
-        pairIndex
-      );
-
-      endpointToPair.set(
-        path[path.length - 1],
-        pairIndex
-      );
-    }
-  );
+  current.paths.forEach((path, pairIndex) => {
+    endpointToPair.set(path[0], pairIndex);
+    endpointToPair.set(
+      path[path.length - 1],
+      pairIndex
+    );
+  });
 
   const completed =
     connections.length === totalPairs &&
@@ -180,13 +166,10 @@ function App() {
 
   const progress = Math.min(
     100,
-    Math.round(
-      (usedCells / totalCells) * 100
-    )
+    Math.round((usedCells / totalCells) * 100)
   );
 
-  const currentStage =
-    getStageForLevel(level);
+  const currentStage = getStageForLevel(level);
 
   function getHighestUnlockedLevel() {
     let highest = 0;
@@ -202,9 +185,7 @@ function App() {
   }
 
   function isLevelUnlocked(index) {
-    return (
-      index <= getHighestUnlockedLevel()
-    );
+    return index <= getHighestUnlockedLevel();
   }
 
   function isLevelCompleted(index) {
@@ -227,24 +208,14 @@ function App() {
     return count;
   }
 
-  function isStageCompleted(stage) {
-    return (
-      getStageProgress(stage) ===
-      stage.to - stage.from + 1
-    );
-  }
-
   function isEndpoint(cell) {
     return endpointToPair.has(cell);
   }
 
   function getColor(cell) {
-    const pairIndex =
-      endpointToPair.get(cell);
+    const pairIndex = endpointToPair.get(cell);
 
-    return COLORS[
-      pairIndex % COLORS.length
-    ];
+    return COLORS[pairIndex % COLORS.length];
   }
 
   function isOccupied(cell) {
@@ -254,14 +225,10 @@ function App() {
   }
 
   function areAdjacent(a, b) {
-    const ar = Math.floor(
-      a / current.size
-    );
+    const ar = Math.floor(a / current.size);
     const ac = a % current.size;
 
-    const br = Math.floor(
-      b / current.size
-    );
+    const br = Math.floor(b / current.size);
     const bc = b % current.size;
 
     return (
@@ -273,8 +240,7 @@ function App() {
 
   function pointForCell(cell) {
     const board = boardRef.current;
-    const element =
-      cellRefs.current[cell];
+    const element = cellRefs.current[cell];
 
     if (!board || !element) {
       return null;
@@ -333,9 +299,7 @@ function App() {
     }
 
     const last =
-      activePath[
-        activePath.length - 1
-      ];
+      activePath[activePath.length - 1];
 
     if (cell === last) {
       return;
@@ -414,14 +378,6 @@ function App() {
     }
   }
 
-  function triggerBoardFeedback(type) {
-    setBoardFeedback(type);
-
-    window.setTimeout(() => {
-      setBoardFeedback(null);
-    }, 360);
-  }
-
   function finishPath(cell) {
     if (!dragging || !activePath) {
       return;
@@ -436,8 +392,8 @@ function App() {
       current.paths[pairIndex][0] ===
       activePath[0]
         ? current.paths[pairIndex][
-            current.paths[pairIndex]
-              .length - 1
+            current.paths[pairIndex].length -
+              1
           ]
         : current.paths[pairIndex][0];
 
@@ -445,31 +401,17 @@ function App() {
       cell === target &&
       activePath.length >= 2
     ) {
-      setConnections(
-        (previous) => [
-          ...previous,
-          activePath,
-        ]
-      );
-
-      setLastConnectedPair(pairIndex);
-      triggerBoardFeedback("success");
-
-      window.setTimeout(() => {
-        setLastConnectedPair(null);
-      }, 260);
-    } else if (activePath.length > 1) {
-      triggerBoardFeedback("error");
+      setConnections((previous) => [
+        ...previous,
+        activePath,
+      ]);
     }
 
     setActivePath(null);
     setDragging(false);
   }
 
-  function handlePointerDown(
-    event,
-    cell
-  ) {
+  function handlePointerDown(event, cell) {
     event.preventDefault();
 
     event.currentTarget.setPointerCapture?.(
@@ -544,7 +486,7 @@ function App() {
         JSON.stringify(completedLevels)
       );
     } catch {
-      // Прогресс останется в памяти.
+      // Ничего не делаем.
     }
   }, [completedLevels]);
 
@@ -555,7 +497,7 @@ function App() {
         String(coins)
       );
     } catch {
-      // Монеты останутся в памяти.
+      // Ничего не делаем.
     }
   }, [coins]);
 
@@ -567,80 +509,75 @@ function App() {
     }, 1800);
   }
 
-  function spendCoins(amount, action) {
-    if (coins < amount) {
+  function requestPaidAction(type, cost) {
+    if (coins < cost) {
       showCoinMessage(
         "Недостаточно монет"
       );
 
-      return false;
+      return;
     }
 
     setPendingAction({
-      type: action,
-      cost: amount,
+      type,
+      cost,
     });
-
-    return true;
   }
 
-  function confirmPendingAction() {
+  function confirmPaidAction() {
     if (!pendingAction) {
       return;
     }
 
-    const {
-      type,
-      cost,
-    } = pendingAction;
-
-    if (coins < cost) {
+    if (coins < pendingAction.cost) {
       setPendingAction(null);
+
       showCoinMessage(
         "Недостаточно монет"
       );
+
       return;
     }
 
     setCoins(
       (previous) =>
-        previous - cost
+        previous - pendingAction.cost
     );
+
+    const action = pendingAction.type;
 
     setPendingAction(null);
 
-    if (type === "hint") {
+    if (action === "hint") {
       revealHint();
     }
 
-    if (type === "undo") {
+    if (action === "undo") {
       performUndo();
     }
   }
 
   function revealHint() {
-    const availablePaths =
-      current.paths
-        .map(
-          (path, pairIndex) => ({
-            path,
-            pairIndex,
-          })
-        )
-        .filter(
-          ({ pairIndex }) =>
-            !connections.some(
-              (connection) =>
-                endpointToPair.get(
-                  connection[0]
-                ) === pairIndex
-            )
+    for (
+      let pairIndex = 0;
+      pairIndex < current.paths.length;
+      pairIndex += 1
+    ) {
+      const alreadyConnected =
+        connections.some(
+          (connection) =>
+            endpointToPair.get(
+              connection[0]
+            ) === pairIndex
         );
 
-    for (const {
-      path,
-      pairIndex,
-    } of availablePaths) {
+      if (alreadyConnected) {
+        continue;
+      }
+
+      const path =
+        current.paths[pairIndex];
+
       const middleCells =
         path.slice(1, -1);
 
@@ -694,39 +631,47 @@ function App() {
       return;
     }
 
-    const hasAvailableHint =
-      current.paths.some(
-        (path, pairIndex) => {
-          const connected =
-            connections.some(
-              (connection) =>
-                endpointToPair.get(
-                  connection[0]
-                ) === pairIndex
-            );
+    let available = false;
 
-          if (connected) {
-            return false;
-          }
+    for (
+      let pairIndex = 0;
+      pairIndex < current.paths.length;
+      pairIndex += 1
+    ) {
+      const connected =
+        connections.some(
+          (connection) =>
+            endpointToPair.get(
+              connection[0]
+            ) === pairIndex
+        );
 
-          const middleCells =
-            path.slice(1, -1);
+      if (connected) {
+        continue;
+      }
 
-          const revealed =
-            hintCells.filter(
-              (hint) =>
-                hint.pairIndex ===
-                pairIndex
-            );
+      const middleCells =
+        current.paths[
+          pairIndex
+        ].slice(1, -1);
 
-          return (
-            revealed.length <
-            middleCells.length
-          );
-        }
-      );
+      const revealed =
+        hintCells.filter(
+          (hint) =>
+            hint.pairIndex ===
+            pairIndex
+        ).length;
 
-    if (!hasAvailableHint) {
+      if (
+        revealed <
+        middleCells.length
+      ) {
+        available = true;
+        break;
+      }
+    }
+
+    if (!available) {
       showCoinMessage(
         "Больше подсказок нет"
       );
@@ -734,9 +679,9 @@ function App() {
       return;
     }
 
-    spendCoins(
-      HINT_COST,
-      "hint"
+    requestPaidAction(
+      "hint",
+      HINT_COST
     );
   }
 
@@ -759,9 +704,9 @@ function App() {
       return;
     }
 
-    spendCoins(
-      UNDO_COST,
-      "undo"
+    requestPaidAction(
+      "undo",
+      UNDO_COST
     );
   }
 
@@ -770,10 +715,8 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
-    setBoardFeedback(null);
-    setLastConnectedPair(null);
     setShowSuccess(false);
-    setSuccessType("level");
+    setPendingAction(null);
   }
 
   function openLevel(index) {
@@ -786,8 +729,6 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
-    setBoardFeedback(null);
-    setLastConnectedPair(null);
     setShowSuccess(false);
     setSuccessType("level");
     setPendingAction(null);
@@ -815,7 +756,6 @@ function App() {
       setDragging(false);
       setHintCells([]);
       setSuccessType("level");
-      setScreen("game");
     } else {
       setScreen("levels");
     }
@@ -827,12 +767,13 @@ function App() {
 
     if (!alreadyCompleted) {
       setCompletedLevels(
-        (previous) => [
-          ...previous,
-          level,
-        ].sort(
-          (a, b) => a - b
-        )
+        (previous) =>
+          [
+            ...previous,
+            level,
+          ].sort(
+            (a, b) => a - b
+          )
       );
 
       setCoins(
@@ -845,11 +786,9 @@ function App() {
       );
     }
 
-    const stage =
-      getStageForLevel(level);
-
     const finishingStage =
-      level + 1 === stage.to;
+      level + 1 ===
+      currentStage.to;
 
     setSuccessType(
       finishingStage
@@ -868,122 +807,148 @@ function App() {
     completeCurrentLevel();
   }, [completed, level]);
 
-  function renderStageHeader(stage) {
-    const stageCount =
+  function renderStage(stage) {
+    const count =
       getStageProgress(stage);
 
-    const stageTotal =
-      stage.to - stage.from + 1;
+    const total =
+      stage.to -
+      stage.from +
+      1;
 
-    const stagePercent =
+    const percent =
       Math.round(
-        (stageCount /
-          stageTotal) *
-          100
+        (count / total) * 100
       );
 
     return (
-      <div
-        style={{
-          marginBottom: 22,
-          padding: 20,
-          borderRadius: 20,
-          border: `1px solid ${stage.color}33`,
-          background:
-            "rgba(20, 23, 31, 0.85)",
-        }}
+      <section
+        key={stage.name}
+        className="level-stage"
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent:
-              "space-between",
-            gap: 12,
-          }}
-        >
-          <div>
-            <div
+        <div className="stage-header">
+          <div className="stage-title">
+            <span
+              className="stage-dot"
               style={{
                 color: stage.color,
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: 3,
+                backgroundColor:
+                  stage.color,
               }}
-            >
-              ЭТАП
-            </div>
+            />
 
-            <div
-              style={{
-                marginTop: 5,
-                fontSize: 25,
-                fontWeight: 900,
-              }}
-            >
+            <strong>
               {stage.name}
-            </div>
+            </strong>
 
-            <div
-              style={{
-                marginTop: 4,
-                color: "#7c8392",
-                fontSize: 13,
-              }}
-            >
+            <span>
               {stage.description}
-            </div>
+            </span>
           </div>
 
-          <div
-            style={{
-              textAlign: "right",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-              }}
-            >
-              {stageCount} /{" "}
-              {stageTotal}
-            </div>
-
-            <div
-              style={{
-                marginTop: 4,
-                color: "#737987",
-                fontSize: 11,
-              }}
-            >
-              уровней
-            </div>
+          <div className="stage-progress">
+            {count} / {total}
           </div>
         </div>
 
-        <div
-          style={{
-            height: 6,
-            marginTop: 16,
-            overflow: "hidden",
-            borderRadius: 999,
-            background: "#292e39",
-          }}
-        >
+        <div className="progress-track">
           <div
+            className="progress-fill"
             style={{
-              width: `${stagePercent}%`,
-              height: "100%",
-              borderRadius: 999,
+              width: `${percent}%`,
               background:
                 stage.color,
-              transition:
-                "width .4s ease",
+              boxShadow:
+                `0 0 16px ${stage.color}55`,
             }}
           />
         </div>
-      </div>
+
+        <div
+          className="level-grid"
+          style={{
+            marginTop: 12,
+          }}
+        >
+          {LEVELS.slice(
+            stage.from - 1,
+            stage.to
+          ).map(
+            (_, localIndex) => {
+              const index =
+                stage.from -
+                1 +
+                localIndex;
+
+              const unlocked =
+                isLevelUnlocked(
+                  index
+                );
+
+              const completed =
+                isLevelCompleted(
+                  index
+                );
+
+              const next =
+                unlocked &&
+                !completed &&
+                index ===
+                  getHighestUnlockedLevel();
+
+              return (
+                <button
+                  key={index}
+                  className={[
+                    "level-card",
+                    unlocked
+                      ? "unlocked"
+                      : "locked",
+                    completed
+                      ? "completed"
+                      : "",
+                    next
+                      ? "next-level"
+                      : "",
+                  ].join(" ")}
+                  onClick={() =>
+                    openLevel(index)
+                  }
+                  disabled={
+                    !unlocked
+                  }
+                >
+                  <span className="level-number">
+                    {index + 1}
+                  </span>
+
+                  {completed ? (
+                    <span className="level-status completed-status">
+                      ✓
+                    </span>
+                  ) : unlocked ? (
+                    <span className="level-status play-status">
+                      →
+                    </span>
+                  ) : (
+                    <span className="level-status lock-status">
+                      ●
+                    </span>
+                  )}
+
+                  <span className="level-label">
+                    {completed
+                      ? "Пройден"
+                      : unlocked
+                      ? "Играть"
+                      : "Закрыт"}
+                  </span>
+                </button>
+              );
+            }
+          )}
+        </div>
+      </section>
     );
   }
 
@@ -994,7 +959,8 @@ function App() {
     return (
       <div className="app levels-screen">
         <main className="levels-page">
-          <div className="levels-header">
+
+          <header className="levels-header">
             <div className="brand">
               СОЕДИНИ
             </div>
@@ -1013,28 +979,8 @@ function App() {
               поле.
             </p>
 
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 18,
-                padding:
-                  "9px 15px",
-                border:
-                  "1px solid #3a3f4b",
-                borderRadius: 999,
-                background:
-                  "#151820",
-                fontWeight: 900,
-              }}
-            >
-              <span
-                style={{
-                  color: "#ffd34d",
-                  fontSize: 17,
-                }}
-              >
+            <div className="coin-display">
+              <span className="coin-icon">
                 ●
               </span>
 
@@ -1042,21 +988,14 @@ function App() {
                 {coins}
               </span>
 
-              <span
-                style={{
-                  color: "#777e8e",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                }}
-              >
+              <span>
                 МОНЕТ
               </span>
             </div>
-          </div>
+          </header>
 
           <div className="levels-progress">
-            <div>
+            <div className="progress-meta">
               <span>
                 ПРОГРЕСС
               </span>
@@ -1081,111 +1020,11 @@ function App() {
             </div>
           </div>
 
-          {STAGES.map(
-            (stage) => (
-              <section
-                key={stage.name}
-                style={{
-                  marginBottom: 34,
-                }}
-              >
-                {renderStageHeader(
-                  stage
-                )}
-
-                <div className="level-grid">
-                  {LEVELS.slice(
-                    stage.from - 1,
-                    stage.to
-                  ).map(
-                    (_, localIndex) => {
-                      const index =
-                        stage.from -
-                        1 +
-                        localIndex;
-
-                      const unlocked =
-                        isLevelUnlocked(
-                          index
-                        );
-
-                      const isCompleted =
-                        isLevelCompleted(
-                          index
-                        );
-
-                      const isNext =
-                        unlocked &&
-                        !isCompleted &&
-                        index ===
-                          getHighestUnlockedLevel();
-
-                      return (
-                        <button
-                          key={index}
-                          className={[
-                            "level-card",
-                            unlocked
-                              ? "unlocked"
-                              : "locked",
-                            isCompleted
-                              ? "completed"
-                              : "",
-                            isNext
-                              ? "next-level"
-                              : "",
-                          ].join(
-                            " "
-                          )}
-                          onClick={() =>
-                            openLevel(
-                              index
-                            )
-                          }
-                          disabled={
-                            !unlocked
-                          }
-                        >
-                          <span className="level-number">
-                            {index + 1}
-                          </span>
-
-                          {isCompleted ? (
-                            <span className="level-status completed-status">
-                              ✓
-                            </span>
-                          ) : unlocked ? (
-                            <span className="level-status play-status">
-                              →
-                            </span>
-                          ) : (
-                            <span className="level-status lock-status">
-                              ●
-                            </span>
-                          )}
-
-                          <span className="level-label">
-                            {isCompleted
-                              ? "Пройден"
-                              : unlocked
-                              ? "Играть"
-                              : "Закрыт"}
-                          </span>
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-              </section>
-            )
-          )}
+          {STAGES.map(renderStage)}
 
           <div className="levels-footer">
-            <span>
-              За каждый новый
-              пройденный уровень —
-              +1 монета
-            </span>
+            За каждый новый пройденный
+            уровень — +1 монета
           </div>
         </main>
       </div>
@@ -1195,62 +1034,9 @@ function App() {
   function renderGameScreen() {
     return (
       <div className="app game-screen">
-        <style>{`
-          @keyframes soediniBoardShake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-6px); }
-            40% { transform: translateX(5px); }
-            60% { transform: translateX(-4px); }
-            80% { transform: translateX(3px); }
-          }
-
-          @keyframes soediniBoardSuccess {
-            0% { transform: scale(1); }
-            45% { transform: scale(1.018); }
-            100% { transform: scale(1); }
-          }
-
-          @keyframes soediniLineComplete {
-            0% { opacity: .55; filter: drop-shadow(0 0 3px currentColor); }
-            50% { opacity: 1; filter: drop-shadow(0 0 7px currentColor) drop-shadow(0 0 17px currentColor); }
-            100% { opacity: .94; filter: drop-shadow(0 0 4px rgba(255,255,255,.15)) drop-shadow(0 0 8px currentColor); }
-          }
-
-          @keyframes soediniDotPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.18); }
-          }
-
-          .board-error {
-            animation: soediniBoardShake .36s ease;
-            border-color: rgba(255, 92, 92, .32) !important;
-            box-shadow:
-              inset 0 1px 0 rgba(255,255,255,.055),
-              0 25px 70px rgba(0,0,0,.38),
-              0 0 35px rgba(255,92,92,.14) !important;
-          }
-
-          .board-success {
-            animation: soediniBoardSuccess .26s ease;
-          }
-
-          .connection-complete {
-            animation: soediniLineComplete .26s ease;
-          }
-
-          .drawing-line {
-            stroke-linecap: round;
-            stroke-linejoin: round;
-          }
-
-          .board-success .dot {
-            animation:
-              dotAppear .25s cubic-bezier(.2,.8,.2,1) both,
-              soediniDotPulse .26s ease .02s;
-          }
-        `}</style>
 
         <header className="game-header">
+
           <button
             className="back-button"
             onClick={openLevels}
@@ -1271,29 +1057,32 @@ function App() {
                 {level + 1}
               </strong>
             </div>
+
+            <div className="game-progress">
+              <div
+                style={{
+                  width: `${progress}%`,
+                }}
+              />
+            </div>
           </div>
 
-          <div
-            className="game-progress"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span
-              style={{
-                color: "#ffd34d",
-              }}
-            >
+          <div className="coin-display">
+            <span className="coin-icon">
               ●
             </span>
-            {coins}
+
+            <span>
+              {coins}
+            </span>
           </div>
+
         </header>
 
         <main className="game">
+
           <div className="info">
+
             <div className="stats">
               <span>
                 Линии{" "}
@@ -1312,6 +1101,7 @@ function App() {
             </div>
 
             <div className="controls">
+
               <button
                 onClick={
                   undoLastMove
@@ -1323,12 +1113,10 @@ function App() {
                 }
               >
                 ← Назад ·{" "}
-                {UNDO_COST}
-                {" "}
+                {UNDO_COST}{" "}
                 <span
                   style={{
-                    color:
-                      "#ffd34d",
+                    color: "#ffd34d",
                   }}
                 >
                   ●
@@ -1340,12 +1128,10 @@ function App() {
                 disabled={dragging}
               >
                 Подсказка ·{" "}
-                {HINT_COST}
-                {" "}
+                {HINT_COST}{" "}
                 <span
                   style={{
-                    color:
-                      "#ffd34d",
+                    color: "#ffd34d",
                   }}
                 >
                   ●
@@ -1357,21 +1143,17 @@ function App() {
               >
                 Заново
               </button>
+
             </div>
           </div>
 
           <div
             ref={boardRef}
-            className={`board ${
-              boardFeedback === "error"
-                ? "board-error"
-                : boardFeedback === "success"
-                ? "board-success"
-                : ""
-            }`}
+            className="board"
             style={{
               gridTemplateColumns:
                 `repeat(${current.size}, 1fr)`,
+
               gridTemplateRows:
                 `repeat(${current.size}, 1fr)`,
             }}
@@ -1379,11 +1161,13 @@ function App() {
               handlePointerMove
             }
           >
+
             <svg
               className="lines"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
             >
+
               {connections.map(
                 (path, index) => {
                   const pairIndex =
@@ -1397,11 +1181,7 @@ function App() {
                       points={pathPoints(
                         path
                       )}
-                      className={`connection-line ${
-                        pairIndex === lastConnectedPair
-                          ? "connection-complete"
-                          : ""
-                      }`}
+                      className="connection-line"
                       stroke={
                         COLORS[
                           pairIndex %
@@ -1418,12 +1198,13 @@ function App() {
                   points={pathPoints(
                     activePath
                   )}
-                  className="connection-line active-line drawing-line"
+                  className="connection-line active-line"
                   stroke={getColor(
                     activePath[0]
                   )}
                 />
               )}
+
             </svg>
 
             {Array.from({
@@ -1448,9 +1229,7 @@ function App() {
 
                 const color =
                   endpoint
-                    ? getColor(
-                        index
-                      )
+                    ? getColor(index)
                     : null;
 
                 const hint =
@@ -1463,30 +1242,26 @@ function App() {
                 return (
                   <button
                     key={index}
-                    ref={(
-                      element
-                    ) => {
+                    ref={(element) => {
                       if (element) {
                         cellRefs.current[
                           index
-                        ] =
-                          element;
+                        ] = element;
                       }
                     }}
                     data-cell={index}
-                    className={`cell ${
+                    className={[
+                      "cell",
                       endpoint
                         ? "endpoint"
-                        : ""
-                    } ${
+                        : "",
                       connected
                         ? "connected"
-                        : ""
-                    } ${
+                        : "",
                       active
                         ? "active"
-                        : ""
-                    }`}
+                        : "",
+                    ].join(" ")}
                     onPointerDown={(
                       event
                     ) =>
@@ -1536,6 +1311,7 @@ function App() {
                 );
               }
             )}
+
           </div>
 
           {!showSuccess && (
@@ -1544,6 +1320,7 @@ function App() {
               и веди по клеткам
             </div>
           )}
+
         </main>
 
         {coinMessage && (
@@ -1562,13 +1339,11 @@ function App() {
               borderRadius: 999,
               background:
                 "#191d26",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 800,
               boxShadow:
                 "0 12px 40px rgba(0,0,0,.45)",
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: 14,
-              animation:
-                "modalIn .25s ease",
               whiteSpace:
                 "nowrap",
             }}
@@ -1584,12 +1359,8 @@ function App() {
               zIndex: 250,
             }}
           >
-            <div
-              className="success-modal"
-              style={{
-                maxWidth: 390,
-              }}
-            >
+            <div className="success-modal">
+
               <div
                 style={{
                   fontSize: 38,
@@ -1600,15 +1371,10 @@ function App() {
                 ●
               </div>
 
-              <h2
-                style={{
-                  fontSize: 28,
-                }}
-              >
+              <h2>
                 Потратить{" "}
                 {pendingAction.cost}{" "}
-                {pendingAction.cost ===
-                1
+                {pendingAction.cost === 1
                   ? "монету"
                   : "монеты"}
                 ?
@@ -1621,27 +1387,19 @@ function App() {
                   : "Последняя соединённая линия будет отменена."}
               </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection:
-                    "column",
-                  gap: 10,
-                  marginTop: 20,
-                }}
-              >
+              <div className="success-actions">
+
                 <button
                   className="success-next"
                   onClick={
-                    confirmPendingAction
+                    confirmPaidAction
                   }
                 >
                   Потратить{" "}
                   {pendingAction.cost}{" "}
                   <span
                     style={{
-                      color:
-                        "#ffd34d",
+                      color: "#ffd34d",
                     }}
                   >
                     ●
@@ -1658,13 +1416,16 @@ function App() {
                 >
                   Отмена
                 </button>
+
               </div>
+
             </div>
           </div>
         )}
 
         {showSuccess && (
           <div className="success-overlay">
+
             <div className="confetti">
               {Array.from({
                 length: 32,
@@ -1673,8 +1434,7 @@ function App() {
                   <span
                     key={index}
                     style={{
-                      "--i":
-                        index,
+                      "--i": index,
                       "--delay": `${
                         (index % 8) *
                         0.08
@@ -1686,6 +1446,7 @@ function App() {
             </div>
 
             <div className="success-modal">
+
               <div className="success-icon">
                 ✓
               </div>
@@ -1715,8 +1476,16 @@ function App() {
                     –
                     {currentStage.to}.
                     <br />
-                    Впереди новый
-                    этап.
+                    <strong
+                      style={{
+                        color:
+                          "#ffd34d",
+                      }}
+                    >
+                      +1 монета
+                    </strong>
+                    <br />
+                    Впереди новый этап.
                   </p>
                 </>
               ) : (
@@ -1730,6 +1499,7 @@ function App() {
                     Ура!
                     <br />
                     Вы прошли
+                    <br />
                     уровень!
                   </h2>
 
@@ -1751,6 +1521,7 @@ function App() {
               )}
 
               <div className="success-actions">
+
                 {level + 1 <
                   LEVELS.length && (
                   <button
@@ -1763,6 +1534,7 @@ function App() {
                     "stage"
                       ? "Начать новый этап"
                       : "Следующий уровень"}
+
                     <span>
                       →
                     </span>
@@ -1777,10 +1549,13 @@ function App() {
                 >
                   Все уровни
                 </button>
+
               </div>
+
             </div>
           </div>
         )}
+
       </div>
     );
   }
