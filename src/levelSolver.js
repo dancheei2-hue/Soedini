@@ -1,23 +1,39 @@
 /*
- * ТОЧНЫЙ РЕШАТЕЛЬ УРОВНЕЙ
+ * ТОЧНЫЙ ПРОВЕРЯЮЩИЙ РЕШАТЕЛЬ СОЕДИНИ
+ *
+ * Уровень уже содержит одно корректное решение:
+ * paths — это скрытое решение, с которым был создан уровень.
+ *
+ * Поэтому нам не нужно сначала искать первое решение.
+ * Мы проверяем:
+ *
+ *   1. существует ли корректное альтернативное решение;
+ *   2. если нет — исходное решение единственное.
  *
  * Возвращает:
- *   unique   — найдено ровно одно решение
- *   multiple — найдено минимум два решения
- *   invalid  — уровень некорректен
- *   timeout  — за отведённое время нельзя доказать результат
  *
- * Важно:
- * timeout НЕ означает unique.
+ *   unique
+ *     Исходное решение единственное.
+ *
+ *   multiple
+ *     Найдено другое корректное решение.
+ *
+ *   invalid
+ *     Исходное решение уровня некорректно
+ *     или другого решения нет вообще.
+ *
+ *   timeout
+ *     Поиск альтернативного решения не завершился
+ *     за установленное время.
+ *
+ * ВАЖНО:
+ *
+ * timeout никогда не считается unique.
  */
 
 const DEFAULT_TIME_LIMIT_MS = 12000;
-const MAX_SOLUTIONS = 2;
 
-
-/* ============================================================
-   БАЗОВЫЕ ФУНКЦИИ
-   ============================================================ */
+const MAX_GENERATED_PATHS_PER_PAIR = 200000;
 
 function getNeighbors(cell, size) {
   const row = Math.floor(cell / size);
@@ -44,7 +60,6 @@ function getNeighbors(cell, size) {
   return result;
 }
 
-
 function manhattan(a, b, size) {
   const ar = Math.floor(a / size);
   const ac = a % size;
@@ -58,7 +73,6 @@ function manhattan(a, b, size) {
   );
 }
 
-
 function pathToMask(path) {
   let mask = 0n;
 
@@ -69,6 +83,16 @@ function pathToMask(path) {
   return mask;
 }
 
+function countBits(mask) {
+  let count = 0;
+
+  while (mask !== 0n) {
+    mask &= mask - 1n;
+    count++;
+  }
+
+  return count;
+}
 
 function fullMask(totalCells) {
   return (
@@ -77,20 +101,12 @@ function fullMask(totalCells) {
   );
 }
 
-
-/* ============================================================
-   ПРОВЕРКА ИСХОДНОГО УРОВНЯ
-   ============================================================ */
-
 function validateLevel(level) {
   if (!level) {
     return false;
   }
 
-  const {
-    size,
-    paths,
-  } = level;
+  const { size, paths } = level;
 
   if (
     !Number.isInteger(size) ||
@@ -109,8 +125,7 @@ function validateLevel(level) {
   const totalCells =
     size * size;
 
-  const used =
-    new Set();
+  const used = new Set();
 
   for (const path of paths) {
     if (
@@ -135,9 +150,7 @@ function validateLevel(level) {
         return false;
       }
 
-      if (
-        used.has(cell)
-      ) {
+      if (used.has(cell)) {
         return false;
       }
 
@@ -160,20 +173,11 @@ function validateLevel(level) {
   }
 
   return (
-    used.size ===
-    totalCells
+    used.size === totalCells
   );
 }
 
-
-/* ============================================================
-   ПАРЫ
-   ============================================================ */
-
-function createPairs(
-  paths,
-  size
-) {
+function createPairs(paths, size) {
   return paths.map(
     (path, index) => ({
       index,
@@ -200,11 +204,6 @@ function createPairs(
   );
 }
 
-
-/*
- * Проверяем, что клетка является концом
- * другой пары.
- */
 function getBlockedEndpointMask(
   pairs,
   allowedPairIndex
@@ -220,23 +219,14 @@ function getBlockedEndpointMask(
     }
 
     mask |=
-      1n << BigInt(
-        pair.start
-      );
+      1n << BigInt(pair.start);
 
     mask |=
-      1n << BigInt(
-        pair.end
-      );
+      1n << BigInt(pair.end);
   }
 
   return mask;
 }
-
-
-/* ============================================================
-   ДОСТИЖИМОСТЬ
-   ============================================================ */
 
 function canReach(
   start,
@@ -264,12 +254,14 @@ function canReach(
       return true;
     }
 
-    for (
-      const next of
+    const neighbors =
       getNeighbors(
         cell,
         size
-      )
+      );
+
+    for (
+      const next of neighbors
     ) {
       if (
         visited.has(next)
@@ -281,17 +273,15 @@ function canReach(
         1n << BigInt(next);
 
       if (
-        (occupiedMask & bit) !==
-          0n &&
-        next !== target
+        next !== target &&
+        (occupiedMask & bit) !== 0n
       ) {
         continue;
       }
 
       if (
-        (blockedEndpointMask & bit) !==
-          0n &&
-        next !== target
+        next !== target &&
+        (blockedEndpointMask & bit) !== 0n
       ) {
         continue;
       }
@@ -304,10 +294,6 @@ function canReach(
   return false;
 }
 
-
-/*
- * Быстрая проверка всех оставшихся пар.
- */
 function allPairsReachable(
   pairs,
   size,
@@ -336,26 +322,90 @@ function allPairsReachable(
   return true;
 }
 
+function hasDeadCell(
+  pairs,
+  size,
+  occupiedMask
+) {
+  const totalCells =
+    size * size;
 
-/* ============================================================
-   ГЕНЕРАЦИЯ ВОЗМОЖНЫХ ПУТЕЙ
-   ============================================================ */
+  const endpoints =
+    new Set();
 
-function generatePaths(
+  for (const pair of pairs) {
+    endpoints.add(pair.start);
+    endpoints.add(pair.end);
+  }
+
+  const full =
+    fullMask(totalCells);
+
+  const freeMask =
+    full & ~occupiedMask;
+
+  for (
+    let cell = 0;
+    cell < totalCells;
+    cell++
+  ) {
+    const bit =
+      1n << BigInt(cell);
+
+    if (
+      (freeMask & bit) === 0n
+    ) {
+      continue;
+    }
+
+    if (
+      endpoints.has(cell)
+    ) {
+      continue;
+    }
+
+    let degree = 0;
+
+    for (
+      const next of
+      getNeighbors(cell, size)
+    ) {
+      const nextBit =
+        1n << BigInt(next);
+
+      if (
+        (freeMask & nextBit) !== 0n
+      ) {
+        degree++;
+      }
+    }
+
+    /*
+     * Свободная клетка без соседей
+     * не сможет попасть ни в один путь.
+     */
+    if (degree === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function generateAlternativePaths(
   pair,
   pairs,
   size,
   occupiedMask,
-  deadline,
-  excludeKnown
+  deadline
 ) {
-  const result = [];
-
   const blockedEndpointMask =
     getBlockedEndpointMask(
       pairs,
       pair.index
     );
+
+  const result = [];
 
   const visited =
     new Set([pair.start]);
@@ -366,39 +416,42 @@ function generatePaths(
   let currentMask =
     1n << BigInt(pair.start);
 
-
   function dfs(cell) {
     if (
-      Date.now() >
-      deadline
+      Date.now() > deadline
     ) {
-      return;
+      return true;
     }
 
     if (
-      result.length >= 5000
+      result.length >=
+      MAX_GENERATED_PATHS_PER_PAIR
     ) {
-      return;
+      return false;
     }
 
     if (
       cell === pair.end
     ) {
-      if (
-        !excludeKnown ||
-        currentMask !==
-          pair.knownMask
-      ) {
-        result.push({
-          cells:
-            [...currentPath],
+      /*
+       * Здесь НЕ исключаем knownMask.
+       *
+       * Проверка альтернативности происходит
+       * на уровне всей комбинации путей.
+       */
+      result.push({
+        cells:
+          [...currentPath],
 
-          mask:
-            currentMask,
-        });
-      }
+        mask:
+          currentMask,
 
-      return;
+        isKnown:
+          currentMask ===
+          pair.knownMask,
+      });
+
+      return false;
     }
 
     let neighbors =
@@ -407,10 +460,12 @@ function generatePaths(
         size
       );
 
-
     /*
      * Сначала пробуем клетки,
-     * которые ближе к концу пары.
+     * которые ближе к конечной точке.
+     *
+     * Это позволяет быстро найти
+     * альтернативное решение.
      */
     neighbors.sort(
       (a, b) => {
@@ -432,13 +487,13 @@ function generatePaths(
       }
     );
 
-
-    for (const next of neighbors) {
+    for (
+      const next of neighbors
+    ) {
       if (
-        Date.now() >
-        deadline
+        Date.now() > deadline
       ) {
-        return;
+        return true;
       }
 
       if (
@@ -450,38 +505,20 @@ function generatePaths(
       const bit =
         1n << BigInt(next);
 
-
-      /*
-       * Клетки других уже выбранных
-       * путей использовать нельзя.
-       */
       if (
-        (occupiedMask & bit) !==
-          0n &&
-        next !== pair.end
+        next !== pair.end &&
+        (occupiedMask & bit) !== 0n
       ) {
         continue;
       }
 
-
-      /*
-       * Концы других пар нельзя
-       * использовать как промежуточные клетки.
-       */
       if (
-        (blockedEndpointMask & bit) !==
-          0n &&
-        next !== pair.end
+        next !== pair.end &&
+        (blockedEndpointMask & bit) !== 0n
       ) {
         continue;
       }
 
-
-      /*
-       * Нельзя идти к цели, если текущая
-       * клетка ещё не позволяет получить
-       * минимально необходимое расстояние.
-       */
       const distance =
         manhattan(
           next,
@@ -489,47 +526,44 @@ function generatePaths(
           size
         );
 
-      const remainingCells =
+      const remaining =
         size * size -
         visited.size;
 
       if (
         distance >
-        remainingCells
+        remaining
       ) {
         continue;
       }
-
 
       visited.add(next);
       currentPath.push(next);
       currentMask |= bit;
 
-      dfs(next);
+      const stopped =
+        dfs(next);
 
       currentMask ^= bit;
       currentPath.pop();
       visited.delete(next);
 
-
-      if (
-        result.length >= 5000
-      ) {
-        return;
+      if (stopped) {
+        return true;
       }
     }
+
+    return false;
   }
 
+  const timedOut =
+    dfs(pair.start);
 
-  dfs(pair.start);
-
-  return result;
+  return {
+    paths: result,
+    timedOut,
+  };
 }
-
-
-/* ============================================================
-   КЛЮЧ МЕМОИЗАЦИИ
-   ============================================================ */
 
 function createStateKey(
   remainingPairs,
@@ -538,7 +572,8 @@ function createStateKey(
   const indexes =
     remainingPairs
       .map(
-        pair => pair.index
+        pair =>
+          pair.index
       )
       .sort(
         (a, b) => a - b
@@ -552,11 +587,6 @@ function createStateKey(
   );
 }
 
-
-/* ============================================================
-   ТОЧНЫЙ SOLVER
-   ============================================================ */
-
 export function solveLevel(
   level,
   options = {}
@@ -568,7 +598,6 @@ export function solveLevel(
       ? options.timeLimitMs
       : DEFAULT_TIME_LIMIT_MS;
 
-
   const startedAt =
     Date.now();
 
@@ -576,29 +605,36 @@ export function solveLevel(
     startedAt +
     timeLimit;
 
-
+  /*
+   * Сначала проверяем само записанное
+   * решение уровня.
+   */
   if (
     !validateLevel(level)
   ) {
     return {
-      status: "invalid",
-      solutions: 0,
+      status:
+        "invalid",
+
+      solutions:
+        0,
+
       elapsedMs:
         Date.now() -
         startedAt,
+
+      nodes:
+        0,
     };
   }
-
 
   const {
     size,
     paths,
   } = level;
 
-
   const totalCells =
     size * size;
-
 
   const pairs =
     createPairs(
@@ -606,13 +642,66 @@ export function solveLevel(
       size
     );
 
+  /*
+   * Проверяем, что исходные пути действительно
+   * покрывают всё поле.
+   */
+  let knownMask = 0n;
+
+  for (
+    const pair of pairs
+  ) {
+    if (
+      (knownMask &
+        pair.knownMask) !==
+      0n
+    ) {
+      return {
+        status:
+          "invalid",
+
+        solutions:
+          0,
+
+        elapsedMs:
+          Date.now() -
+          startedAt,
+
+        nodes:
+          0,
+      };
+    }
+
+    knownMask |=
+      pair.knownMask;
+  }
+
+  if (
+    knownMask !==
+    fullMask(totalCells)
+  ) {
+    return {
+      status:
+        "invalid",
+
+      solutions:
+        0,
+
+      elapsedMs:
+        Date.now() -
+        startedAt,
+
+      nodes:
+        0,
+    };
+  }
 
   /*
-   * Сначала пары с самым маленьким
-   * количеством потенциальных вариантов.
+   * Сначала пытаемся поставить наиболее
+   * ограниченные пары.
    *
-   * Длинные расстояния обычно сильнее
-   * ограничивают пространство поиска.
+   * Длинные расстояния обычно имеют
+   * меньше вариантов.
    */
   pairs.sort(
     (a, b) => {
@@ -633,31 +722,30 @@ export function solveLevel(
     }
   );
 
+  let alternativeFound =
+    false;
 
-  let solutionCount = 0;
+  let timedOut =
+    false;
 
-  let timedOut = false;
-
-  let nodes = 0;
+  let nodes =
+    0;
 
   const memo =
     new Set();
 
-
   function search(
     remainingPairs,
-    occupiedMask
+    occupiedMask,
+    differsFromKnown
   ) {
     nodes++;
 
-
     if (
-      solutionCount >=
-      MAX_SOLUTIONS
+      alternativeFound
     ) {
       return;
     }
-
 
     if (
       Date.now() >
@@ -667,9 +755,9 @@ export function solveLevel(
       return;
     }
 
-
     /*
-     * Все пары соединены.
+     * Если все пары поставлены,
+     * проверяем полное покрытие.
      */
     if (
       remainingPairs.length ===
@@ -677,24 +765,25 @@ export function solveLevel(
     ) {
       if (
         occupiedMask ===
-        fullMask(totalCells)
+          fullMask(totalCells) &&
+        differsFromKnown
       ) {
-        solutionCount++;
+        alternativeFound =
+          true;
       }
 
       return;
     }
 
-
     /*
-     * В Numberlink поле должно быть
-     * полностью занято.
+     * Сколько клеток минимум нужно
+     * оставшимся парам.
      *
-     * Если осталось меньше клеток,
-     * чем необходимо для минимальных
-     * путей, ветка невозможна.
+     * Минимальная длина пути между
+     * концами = Manhattan + 1.
      */
-    let minimumCells = 0;
+    let minimumCells =
+      0;
 
     for (
       const pair of
@@ -720,7 +809,46 @@ export function solveLevel(
       return;
     }
 
+    /*
+     * Если после занятых клеток осталась
+     * изолированная свободная клетка,
+     * решения быть не может.
+     */
+    if (
+      hasDeadCell(
+        remainingPairs,
+        size,
+        occupiedMask
+      )
+    ) {
+      return;
+    }
 
+    /*
+     * Все оставшиеся пары должны хотя бы
+     * потенциально иметь путь.
+     */
+    if (
+      !allPairsReachable(
+        remainingPairs,
+        size,
+        occupiedMask
+      )
+    ) {
+      return;
+    }
+
+    /*
+     * Если состояние не отличается от
+     * известного решения и мы уже использовали
+     * известные маски предыдущих пар,
+     * оно может повторяться.
+     *
+     * differsFromKnown специально не входит
+     * в ключ, поэтому состояние с одинаковыми
+     * оставшимися парами и occupiedMask
+     * эквивалентно.
+     */
     const key =
       createStateKey(
         remainingPairs,
@@ -733,17 +861,15 @@ export function solveLevel(
       return;
     }
 
-
     /*
-     * Выбираем пару, для которой
-     * меньше всего вариантов.
+     * Выбираем пару с наименьшим количеством
+     * возможных путей.
      */
     let selectedPair =
       null;
 
     let selectedCandidates =
       null;
-
 
     for (
       const pair of
@@ -753,21 +879,32 @@ export function solveLevel(
         Date.now() >
         deadline
       ) {
-        timedOut = true;
+        timedOut =
+          true;
+
         return;
       }
 
-
-      const candidates =
-        generatePaths(
+      const generated =
+        generateAlternativePaths(
           pair,
           remainingPairs,
           size,
           occupiedMask,
-          deadline,
-          false
+          deadline
         );
 
+      if (
+        generated.timedOut
+      ) {
+        timedOut =
+          true;
+
+        return;
+      }
+
+      const candidates =
+        generated.paths;
 
       if (
         candidates.length ===
@@ -776,7 +913,6 @@ export function solveLevel(
         memo.add(key);
         return;
       }
-
 
       if (
         selectedCandidates ===
@@ -791,10 +927,9 @@ export function solveLevel(
           candidates;
       }
 
-
       /*
-       * Уже найдено минимальное
-       * количество вариантов.
+       * Один кандидат — идеальная
+       * ветвь для проверки.
        */
       if (
         candidates.length ===
@@ -804,7 +939,6 @@ export function solveLevel(
       }
     }
 
-
     if (
       !selectedPair ||
       !selectedCandidates
@@ -813,17 +947,16 @@ export function solveLevel(
       return;
     }
 
-
     /*
-     * Более короткие пути рассматриваем
-     * раньше.
+     * Сначала проверяем короткие пути.
+     * Они обычно сильнее ограничивают
+     * оставшееся пространство.
      */
     selectedCandidates.sort(
       (a, b) =>
         a.cells.length -
         b.cells.length
     );
-
 
     for (
       const candidate of
@@ -833,10 +966,11 @@ export function solveLevel(
         Date.now() >
         deadline
       ) {
-        timedOut = true;
+        timedOut =
+          true;
+
         return;
       }
-
 
       if (
         (candidate.mask &
@@ -846,11 +980,9 @@ export function solveLevel(
         continue;
       }
 
-
       const newOccupied =
         occupiedMask |
         candidate.mask;
-
 
       const nextPairs =
         remainingPairs.filter(
@@ -859,11 +991,24 @@ export function solveLevel(
             selectedPair.index
         );
 
+      /*
+       * Если этот путь полностью совпадает
+       * с известным путём, пока сохраняем
+       * differsFromKnown.
+       *
+       * Как только хотя бы одна пара получает
+       * другую область клеток — решение
+       * становится альтернативным.
+       */
+      const nextDiffers =
+        differsFromKnown ||
+        candidate.mask !==
+          selectedPair.knownMask;
 
       /*
-       * Очень важный pruning:
-       * каждая оставшаяся пара должна
-       * хотя бы теоретически иметь путь.
+       * Очень важная проверка:
+       * все оставшиеся пары должны сохранять
+       * возможность добраться до своих концов.
        */
       if (
         !allPairsReachable(
@@ -875,107 +1020,84 @@ export function solveLevel(
         continue;
       }
 
-
       search(
         nextPairs,
-        newOccupied
+        newOccupied,
+        nextDiffers
       );
 
-
       if (
-        solutionCount >=
-        MAX_SOLUTIONS
-      ) {
-        return;
-      }
-
-
-      if (
+        alternativeFound ||
         timedOut
       ) {
         return;
       }
     }
 
-
     memo.add(key);
   }
 
-
+  /*
+   * В начале occupiedMask пустой.
+   */
   search(
     pairs,
-    0n
+    0n,
+    false
   );
-
 
   const elapsedMs =
     Date.now() -
     startedAt;
 
-
   if (
-    solutionCount >=
-    MAX_SOLUTIONS
+    alternativeFound
   ) {
     return {
-      status: "multiple",
+      status:
+        "multiple",
+
       solutions:
-        MAX_SOLUTIONS,
+        2,
+
       elapsedMs,
+
       nodes,
     };
   }
-
 
   if (
     timedOut
   ) {
     return {
-      status: "timeout",
+      status:
+        "timeout",
+
       solutions:
-        solutionCount,
+        1,
+
       elapsedMs,
+
       nodes,
     };
   }
 
-
-  if (
-    solutionCount === 1
-  ) {
-    return {
-      status: "unique",
-      solutions: 1,
-      elapsedMs,
-      nodes,
-    };
-  }
-
-
+  /*
+   * Исходное решение существует,
+   * потому что мы проверили его выше.
+   *
+   * Если альтернативы не нашли —
+   * оно единственное.
+   */
   return {
-    status: "invalid",
-    solutions: 0,
+    status:
+      "unique",
+
+    solutions:
+      1,
+
     elapsedMs,
+
     nodes,
   };
-}
-
-
-/* ============================================================
-   ПОДСЧЁТ БИТОВ
-   ============================================================ */
-
-function countBits(mask) {
-  let count = 0;
-
-  while (
-    mask !== 0n
-  ) {
-    mask &=
-      mask - 1n;
-
-    count++;
-  }
-
-  return count;
 }
