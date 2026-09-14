@@ -88,7 +88,9 @@ button:focus-visible {
   z-index: 1;
 }
 
-/* Верхняя часть */
+/* =================================
+   ВЕРХНЯЯ ЧАСТЬ
+   ================================= */
 
 .levels-header {
   position: relative;
@@ -142,7 +144,9 @@ button:focus-visible {
   font-weight: 600;
 }
 
-/* Монеты */
+/* =================================
+   МОНЕТЫ
+   ================================= */
 
 .levels-header > div:last-child {
   display: inline-flex !important;
@@ -182,7 +186,9 @@ button:focus-visible {
   letter-spacing: 0.12em !important;
 }
 
-/* Общий прогресс */
+/* =================================
+   ОБЩИЙ ПРОГРЕСС
+   ================================= */
 
 .levels-progress {
   margin-bottom: 29px;
@@ -234,104 +240,271 @@ button:focus-visible {
 }
 
 /* =================================
-   ЭТАП
+   ЭТАПЫ
    ================================= */
 
 .levels-page > section {
-  margin-bottom: 32px !important;
-  animation: pageAppear 0.5s ease both;
+  position: relative;
+  margin-bottom: 30px !important;
+  animation: stageAppear 0.55s ease both;
 }
 
 /*
-   App задаёт stage-карточке inline-стили.
-   Здесь аккуратно усиливаем их, не ломая размеры.
+   Цвета этапов:
+
+   1 — СТАРТ        зелёный
+   2 — РАЗМИНКА     синий
+   3 — НАПРЯЖЕНИЕ   жёлтый
+   4 — СЛОЖНО       оранжевый
+   5 — МАСТЕР       фиолетовый
 */
+
+/* ---------- БАЗОВАЯ ПЛАШКА ---------- */
 
 .levels-page > section > div:first-child {
   position: relative;
   overflow: hidden;
-  margin-bottom: 16px !important;
-  padding: 18px !important;
-  border-radius: 20px !important;
+
+  margin-bottom: 15px !important;
+  padding: 20px !important;
+
+  border-radius: 23px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+
   background:
     linear-gradient(
       145deg,
-      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.075),
       rgba(255, 255, 255, 0.025)
     ) !important;
+
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 12px 35px rgba(0, 0, 0, 0.16);
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 14px 40px rgba(0, 0, 0, 0.2);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
+
+/* Большое цветное свечение */
 
 .levels-page > section > div:first-child::before {
   content: "";
   position: absolute;
-  inset: 0;
+
+  width: 240px;
+  height: 240px;
+
+  top: -145px;
+  right: -70px;
+
+  border-radius: 50%;
+
+  background: var(--stage-color, rgba(255, 255, 255, 0.08));
+  opacity: 0.12;
+
+  filter: blur(45px);
+
   pointer-events: none;
-  background:
-    radial-gradient(
-      circle at 0% 0%,
-      rgba(255, 255, 255, 0.05),
-      transparent 45%
-    );
 }
+
+/* Диагональный декоративный блик */
+
+.levels-page > section > div:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0.045),
+      transparent 28%,
+      transparent 72%,
+      rgba(255, 255, 255, 0.018)
+    );
+
+  pointer-events: none;
+}
+
+/* ---------- ЦВЕТА ---------- */
+
+.levels-page > section:nth-of-type(1) {
+  --stage-color: #65d879;
+  --stage-rgb: 101, 216, 121;
+}
+
+.levels-page > section:nth-of-type(2) {
+  --stage-color: #5c9cff;
+  --stage-rgb: 92, 156, 255;
+}
+
+.levels-page > section:nth-of-type(3) {
+  --stage-color: #f4d44d;
+  --stage-rgb: 244, 212, 77;
+}
+
+.levels-page > section:nth-of-type(4) {
+  --stage-color: #ff914d;
+  --stage-rgb: 255, 145, 77;
+}
+
+.levels-page > section:nth-of-type(5) {
+  --stage-color: #b17aff;
+  --stage-rgb: 177, 122, 255;
+}
+
+/* ---------- ЗАГОЛОВОК ЭТАПА ---------- */
 
 .levels-page > section > div:first-child > div:first-child {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+
+  min-width: 0;
 }
+
+/* Маленький номер ЭТАПА */
 
 .levels-page > section > div:first-child > div:first-child > div:first-child {
-  font-size: 10px !important;
-  letter-spacing: 0.25em !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: 0.22em !important;
+  font-weight: 900 !important;
+
+  color: var(--stage-color) !important;
+
+  text-shadow:
+    0 0 12px rgba(var(--stage-rgb), 0.45);
 }
+
+/* Цветная точка */
+
+.levels-page > section > div:first-child > div:first-child > div:first-child::before {
+  content: "";
+
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  background: var(--stage-color);
+
+  box-shadow:
+    0 0 0 3px rgba(var(--stage-rgb), 0.1),
+    0 0 13px rgba(var(--stage-rgb), 0.7);
+}
+
+/* Название */
 
 .levels-page > section > div:first-child > div:first-child > div:nth-child(2) {
-  margin-top: 6px !important;
-  font-size: 25px !important;
-  line-height: 1 !important;
+  margin-top: 8px !important;
+
+  font-size: clamp(27px, 7vw, 36px) !important;
+  line-height: 0.95 !important;
+
   font-weight: 950 !important;
-  letter-spacing: -0.035em;
+
+  letter-spacing: -0.05em;
+
+  color: #fff !important;
+
+  text-shadow:
+    0 5px 25px rgba(0, 0, 0, 0.25);
 }
 
+/* Описание */
+
 .levels-page > section > div:first-child > div:first-child > div:nth-child(3) {
-  margin-top: 6px !important;
-  color: rgba(255, 255, 255, 0.42) !important;
+  margin-top: 8px !important;
+
+  color: rgba(255, 255, 255, 0.46) !important;
+
   font-size: 12px !important;
+  line-height: 1.35 !important;
+
   font-weight: 600;
 }
 
+/* ---------- ПРОГРЕСС ЭТАПА ---------- */
+
 .levels-page > section > div:first-child > div:nth-child(2) {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+
+  gap: 5px;
+
+  white-space: nowrap;
 }
 
 .levels-page > section > div:first-child > div:nth-child(2) > div:first-child {
-  font-size: 14px !important;
-  font-weight: 900 !important;
+  color: var(--stage-color) !important;
+
+  font-size: 15px !important;
+  font-weight: 950 !important;
+
+  text-shadow:
+    0 0 14px rgba(var(--stage-rgb), 0.35);
 }
 
 .levels-page > section > div:first-child > div:nth-child(2) > div:nth-child(2) {
-  color: rgba(255, 255, 255, 0.38) !important;
+  color: rgba(255, 255, 255, 0.32) !important;
+
+  font-size: 10px !important;
+  font-weight: 800 !important;
 }
+
+/* ---------- ПРОГРЕСС-БАР ---------- */
 
 .levels-page > section > div:first-child > div:last-child {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+
+  margin-top: 13px !important;
 }
 
 .levels-page > section > div:first-child > div:last-child > div {
-  background: rgba(255, 255, 255, 0.09) !important;
+  height: 5px !important;
+
+  background: rgba(255, 255, 255, 0.07) !important;
+
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .levels-page > section > div:first-child > div:last-child > div > div {
-  box-shadow: 0 0 13px currentColor;
+  background: var(--stage-color) !important;
+
+  box-shadow:
+    0 0 8px rgba(var(--stage-rgb), 0.6),
+    0 0 18px rgba(var(--stage-rgb), 0.3);
+
+  transition: width 0.5s ease;
 }
 
-/* =================================
-   КАРТОЧКИ УРОВНЕЙ
-   ================================= */
+/* ---------- ОТКРЫТЫЙ ТЕКУЩИЙ ЭТАП ---------- */
+
+.levels-page > section:not(:has(.level-card.locked)) > div:first-child {
+  border-color: rgba(var(--stage-rgb), 0.2) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 40px rgba(0, 0, 0, 0.22),
+    0 0 35px rgba(var(--stage-rgb), 0.05);
+}
+
+/* ---------- КАРТОЧКИ УРОВНЕЙ ---------- */
 
 .level-grid {
   display: grid;
@@ -341,24 +514,33 @@ button:focus-visible {
 
 .level-card {
   position: relative;
+
   min-width: 0;
   min-height: 0;
+
   aspect-ratio: 1 / 1;
+
   padding: 0;
+
   border: 1px solid rgba(255, 255, 255, 0.075);
   border-radius: 15px;
+
   background:
     linear-gradient(
       145deg,
       rgba(255, 255, 255, 0.065),
       rgba(255, 255, 255, 0.025)
     );
+
   color: #fff;
+
   cursor: pointer;
   overflow: hidden;
+
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
     0 7px 22px rgba(0, 0, 0, 0.15);
+
   transition:
     transform 0.15s ease,
     border-color 0.15s ease,
@@ -368,9 +550,12 @@ button:focus-visible {
 
 .level-card::before {
   content: "";
+
   position: absolute;
   inset: 0;
+
   pointer-events: none;
+
   background:
     radial-gradient(
       circle at 50% 0%,
@@ -385,11 +570,17 @@ button:focus-visible {
 
 .level-card:hover:not(:disabled) {
   transform: translateY(-2px);
+
   border-color: rgba(255, 255, 255, 0.16);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.2);
 }
 
 .level-card.completed {
   border-color: rgba(107, 203, 119, 0.3);
+
   background:
     linear-gradient(
       145deg,
@@ -400,6 +591,7 @@ button:focus-visible {
 
 .level-card.unlocked:not(.completed) {
   border-color: rgba(113, 132, 255, 0.26);
+
   background:
     linear-gradient(
       145deg,
@@ -415,32 +607,47 @@ button:focus-visible {
 
 .level-number {
   position: absolute;
+
   left: 0;
   right: 0;
   top: 50%;
+
   transform: translateY(-57%);
+
   z-index: 2;
+
   font-size: clamp(18px, 5vw, 23px);
   line-height: 1;
+
   font-weight: 950;
+
   letter-spacing: -0.04em;
 }
 
 .level-label {
   position: absolute;
+
   left: 4px;
   right: 4px;
   bottom: 7px;
+
   z-index: 3;
+
   overflow: hidden;
+
   white-space: nowrap;
   text-overflow: ellipsis;
+
   color: rgba(255, 255, 255, 0.36);
+
   font-size: 7px;
   line-height: 1;
+
   font-weight: 800;
+
   text-align: center;
   text-transform: uppercase;
+
   letter-spacing: 0.04em;
 }
 
@@ -454,15 +661,21 @@ button:focus-visible {
 
 .level-status {
   position: absolute;
+
   top: 6px;
   right: 6px;
+
   z-index: 4;
+
   width: 18px;
   height: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   border-radius: 50%;
+
   font-size: 9px;
   font-weight: 950;
 }
@@ -470,6 +683,7 @@ button:focus-visible {
 .completed-status {
   background: #6bcb77;
   color: #071009;
+
   box-shadow:
     0 0 0 2px rgba(107, 203, 119, 0.08),
     0 0 13px rgba(107, 203, 119, 0.42);
@@ -478,9 +692,11 @@ button:focus-visible {
 .play-status {
   background: #7184ff;
   color: #fff;
+
   box-shadow:
     0 0 0 2px rgba(113, 132, 255, 0.08),
     0 0 15px rgba(113, 132, 255, 0.48);
+
   animation: playablePulse 2s ease-in-out infinite;
 }
 
@@ -489,18 +705,107 @@ button:focus-visible {
   font-size: 9px;
 }
 
-/* Футер */
+/* =================================
+   ЗАКРЫТЫЕ ЭТАПЫ
+   ================================= */
+
+/*
+   Закрытый этап не показывает сетку уровней.
+   Он превращается в самостоятельную большую плашку.
+*/
+
+.levels-page > section:not(:has(.level-grid)) {
+  min-height: 155px;
+}
+
+/* Цветная атмосфера закрытого этапа */
+
+.levels-page > section:not(:has(.level-grid)) > div:first-child {
+  min-height: 155px;
+
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+
+  padding: 25px !important;
+
+  border-color: rgba(var(--stage-rgb), 0.16) !important;
+
+  background:
+    radial-gradient(
+      circle at 88% 50%,
+      rgba(var(--stage-rgb), 0.1),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(var(--stage-rgb), 0.055),
+      rgba(255, 255, 255, 0.018)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 12px 35px rgba(0, 0, 0, 0.16);
+}
+
+/* Затемняем содержимое */
+
+.levels-page > section:not(:has(.level-grid)) > div:first-child > div {
+  opacity: 0.68;
+}
+
+/* Название закрытого этапа */
+
+.levels-page > section:not(:has(.level-grid))
+  > div:first-child
+  > div:first-child
+  > div:nth-child(2) {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* Иконка/акцент замка */
+
+.levels-page > section:not(:has(.level-grid)) > div:first-child::after {
+  content: "🔒";
+
+  position: absolute;
+
+  right: 24px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  font-size: 29px;
+
+  opacity: 0.35;
+
+  filter:
+    grayscale(1)
+    drop-shadow(0 0 15px rgba(var(--stage-rgb), 0.6));
+}
+
+/* =================================
+   ФУТЕР
+   ================================= */
 
 .levels-footer {
   margin-top: 10px;
+
   padding: 16px;
+
   border-radius: 15px;
+
   background: rgba(255, 255, 255, 0.025);
+
   border: 1px solid rgba(255, 255, 255, 0.05);
+
   color: rgba(255, 255, 255, 0.3);
+
   font-size: 10px;
   line-height: 1.4;
+
   font-weight: 650;
+
   text-align: center;
 }
 
@@ -512,6 +817,7 @@ button:focus-visible {
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
+
   padding: 12px 12px 24px;
 
   position: relative;
@@ -524,28 +830,43 @@ button:focus-visible {
 
 .game-screen::before {
   content: "";
+
   position: fixed;
+
   width: 420px;
   height: 420px;
+
   top: -220px;
   left: 50%;
+
   transform: translateX(-50%);
+
   border-radius: 50%;
+
   background: rgba(91, 111, 255, 0.11);
+
   filter: blur(90px);
+
   pointer-events: none;
 }
 
-/* Шапка */
+/* =================================
+   ШАПКА ИГРЫ
+   ================================= */
 
 .game-header {
   width: min(620px, 100%);
+
   flex-shrink: 0;
+
   margin: 0 auto 12px;
 
   display: grid;
+
   grid-template-columns: auto 1fr auto;
+
   align-items: center;
+
   gap: 10px;
 
   position: relative;
@@ -554,16 +875,21 @@ button:focus-visible {
 
 .back-button {
   min-height: 39px;
+
   padding: 8px 11px;
 
   border: 1px solid rgba(255, 255, 255, 0.09);
+
   border-radius: 13px;
 
   background: rgba(255, 255, 255, 0.05);
+
   color: rgba(255, 255, 255, 0.78);
 
   cursor: pointer;
+
   font-size: 11px;
+
   font-weight: 850;
 
   backdrop-filter: blur(14px);
@@ -588,18 +914,26 @@ button:focus-visible {
 
 .game-logo {
   margin: 0;
+
   font-size: 18px;
   line-height: 1;
+
   font-weight: 950;
+
   letter-spacing: -0.04em;
 }
 
 .game-level {
   margin-top: 5px;
+
   color: rgba(255, 255, 255, 0.42);
+
   font-size: 9px;
+
   font-weight: 800;
+
   letter-spacing: 0.08em;
+
   text-transform: uppercase;
 }
 
@@ -609,22 +943,31 @@ button:focus-visible {
 
 .game-progress {
   width: auto !important;
+
   min-width: 45px;
+
   height: 38px !important;
+
   margin: 0 !important;
+
   padding: 6px 9px;
 
   display: flex !important;
+
   align-items: center;
+
   justify-content: center;
 
   border: 1px solid rgba(255, 255, 255, 0.09);
+
   border-radius: 12px;
 
   background: rgba(255, 255, 255, 0.05);
 
   color: #fff;
+
   font-size: 12px;
+
   font-weight: 900;
 
   backdrop-filter: blur(14px);
@@ -632,68 +975,98 @@ button:focus-visible {
 
 .game-progress span {
   color: #ffd34d !important;
-  filter: drop-shadow(0 0 6px rgba(255, 211, 77, 0.4));
+
+  filter:
+    drop-shadow(
+      0 0 6px rgba(255, 211, 77, 0.4)
+    );
 }
 
-/* Основная игровая область */
+/* =================================
+   ОСНОВНАЯ ИГРОВАЯ ОБЛАСТЬ
+   ================================= */
 
 .game {
   width: min(620px, 100%);
+
   flex-shrink: 0;
+
   position: relative;
+
   z-index: 1;
 }
 
 .info {
   text-align: center;
+
   margin: 0 auto 11px;
 }
 
 .stats {
   display: flex;
+
   justify-content: center;
+
   align-items: center;
+
   gap: 7px;
+
   margin: 0 auto 10px;
 }
 
 .stats > span {
   min-width: 76px;
+
   padding: 6px 9px;
+
   border: 1px solid rgba(255, 255, 255, 0.06);
+
   border-radius: 11px;
+
   background: rgba(255, 255, 255, 0.03);
 
   color: rgba(255, 255, 255, 0.42);
+
   font-size: 9px;
+
   font-weight: 750;
 }
 
 .stats > span strong {
   color: rgba(255, 255, 255, 0.88);
+
   font-size: 12px;
+
   font-weight: 900;
 }
 
 .controls {
   display: flex;
+
   justify-content: center;
+
   gap: 7px;
+
   margin: 0 auto;
 }
 
 .controls button {
   min-height: 38px;
+
   padding: 7px 11px;
 
   border: 1px solid rgba(255, 255, 255, 0.09);
+
   border-radius: 11px;
 
   background: rgba(255, 255, 255, 0.055);
+
   color: rgba(255, 255, 255, 0.82);
 
   cursor: pointer;
+
   font-size: 10px;
+
   font-weight: 850;
 
   backdrop-filter: blur(12px);
@@ -714,6 +1087,7 @@ button:focus-visible {
 
 .controls button:disabled {
   opacity: 0.3;
+
   cursor: default;
 }
 
@@ -723,15 +1097,11 @@ button:focus-visible {
 
 .board {
   width: min(620px, 100%);
+
   aspect-ratio: 1 / 1;
 
   position: relative;
 
-  /*
-    КРИТИЧЕСКИ ВАЖНО:
-    App.jsx передаёт gridTemplateColumns
-    и gridTemplateRows.
-  */
   display: grid;
 
   gap: 4px;
@@ -739,6 +1109,7 @@ button:focus-visible {
   padding: 6px;
 
   border: 1px solid rgba(255, 255, 255, 0.09);
+
   border-radius: 22px;
 
   background:
@@ -757,17 +1128,27 @@ button:focus-visible {
   overflow: hidden;
 
   touch-action: none;
+
   user-select: none;
+
   -webkit-user-select: none;
 
-  animation: boardAppear 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation:
+    boardAppear
+    0.4s
+    cubic-bezier(0.2, 0.8, 0.2, 1)
+    both;
 }
 
 .board::before {
   content: "";
+
   position: absolute;
+
   inset: 0;
+
   z-index: 0;
+
   pointer-events: none;
 
   background:
@@ -780,7 +1161,9 @@ button:focus-visible {
     );
 }
 
-/* Клетки */
+/* =================================
+   КЛЕТКИ
+   ================================= */
 
 .cell {
   position: relative;
@@ -794,6 +1177,7 @@ button:focus-visible {
   padding: 0;
 
   border: 1px solid rgba(255, 255, 255, 0.025);
+
   border-radius: 7px;
 
   background: rgba(255, 255, 255, 0.018);
@@ -823,10 +1207,13 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.025);
 }
 
-/* SVG */
+/* =================================
+   SVG ЛИНИИ
+   ================================= */
 
 .lines {
   position: absolute;
+
   inset: 0;
 
   width: 100%;
@@ -843,26 +1230,41 @@ button:focus-visible {
   stroke-width: 9;
 
   stroke-linecap: round;
+
   stroke-linejoin: round;
 
   opacity: 0.94;
 
   filter:
-    drop-shadow(0 0 3px rgba(255, 255, 255, 0.14))
-    drop-shadow(0 0 8px currentColor);
+    drop-shadow(
+      0 0 3px rgba(255, 255, 255, 0.14)
+    )
+    drop-shadow(
+      0 0 8px currentColor
+    );
 
-  animation: lineAppear 0.18s ease both;
+  animation:
+    lineAppear
+    0.18s
+    ease
+    both;
 }
 
 .active-line {
   opacity: 1;
 
   filter:
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.18))
-    drop-shadow(0 0 12px currentColor);
+    drop-shadow(
+      0 0 4px rgba(255, 255, 255, 0.18)
+    )
+    drop-shadow(
+      0 0 12px currentColor
+    );
 }
 
-/* Точки */
+/* =================================
+   ТОЧКИ
+   ================================= */
 
 .dot {
   position: absolute;
@@ -895,7 +1297,10 @@ button:focus-visible {
   pointer-events: none;
 
   animation:
-    dotAppear 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    dotAppear
+    0.25s
+    cubic-bezier(0.2, 0.8, 0.2, 1)
+    both;
 }
 
 .dot::after {
@@ -914,7 +1319,9 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.72);
 }
 
-/* Подсказка */
+/* =================================
+   ПОДСКАЗКА
+   ================================= */
 
 .hint-dot {
   position: absolute;
@@ -943,11 +1350,16 @@ button:focus-visible {
     0 0 0 4px rgba(255, 255, 255, 0.07),
     0 0 16px currentColor;
 
-  animation: hintPulse 1.1s ease-in-out infinite;
+  animation:
+    hintPulse
+    1.1s
+    ease-in-out
+    infinite;
 }
 
 .hint {
   width: fit-content;
+
   max-width: 100%;
 
   margin: 9px auto 0;
@@ -955,6 +1367,7 @@ button:focus-visible {
   padding: 7px 11px;
 
   border: 1px solid rgba(255, 255, 255, 0.055);
+
   border-radius: 10px;
 
   background: rgba(255, 255, 255, 0.035);
@@ -962,7 +1375,9 @@ button:focus-visible {
   color: rgba(255, 255, 255, 0.4);
 
   font-size: 9px;
+
   line-height: 1.3;
+
   font-weight: 700;
 
   text-align: center;
@@ -973,22 +1388,34 @@ button:focus-visible {
    ================================= */
 
 .board-error {
-  animation: soediniBoardShake 0.36s ease;
+  animation:
+    soediniBoardShake
+    0.36s
+    ease;
 
-  border-color: rgba(255, 92, 92, 0.34) !important;
+  border-color:
+    rgba(255, 92, 92, 0.34)
+    !important;
 
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.055),
     0 25px 70px rgba(0, 0, 0, 0.38),
-    0 0 35px rgba(255, 92, 92, 0.14) !important;
+    0 0 35px rgba(255, 92, 92, 0.14)
+    !important;
 }
 
 .board-success {
-  animation: soediniBoardSuccess 0.26s ease;
+  animation:
+    soediniBoardSuccess
+    0.26s
+    ease;
 }
 
 .connection-complete {
-  animation: soediniLineComplete 0.26s ease;
+  animation:
+    soediniLineComplete
+    0.26s
+    ease;
 }
 
 .drawing-line {
@@ -997,16 +1424,18 @@ button:focus-visible {
 }
 
 /* =================================
-   ОКНА
+   ОБЫЧНОЕ ОКНО УСПЕШНОГО УРОВНЯ
    ================================= */
 
 .success-overlay {
   position: fixed;
+
   inset: 0;
 
   z-index: 100;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -1016,7 +1445,11 @@ button:focus-visible {
 
   backdrop-filter: blur(12px);
 
-  animation: overlayAppear 0.18s ease both;
+  animation:
+    overlayAppear
+    0.18s
+    ease
+    both;
 }
 
 .success-overlay::before {
@@ -1036,10 +1469,12 @@ button:focus-visible {
       transparent 68%
     );
 
-  animation: successGlow 2.5s ease-in-out infinite;
+  animation:
+    successGlow
+    2.5s
+    ease-in-out
+    infinite;
 }
-
-/* Модальное окно */
 
 .success-modal {
   width: min(390px, 100%);
@@ -1049,6 +1484,7 @@ button:focus-visible {
   padding: 29px 20px 21px;
 
   border: 1px solid rgba(255, 255, 255, 0.12);
+
   border-radius: 25px;
 
   background:
@@ -1079,6 +1515,7 @@ button:focus-visible {
   margin: 0 auto 16px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -1094,6 +1531,7 @@ button:focus-visible {
   color: #fff;
 
   font-size: 29px;
+
   font-weight: 950;
 
   box-shadow:
@@ -1114,6 +1552,7 @@ button:focus-visible {
   color: #93a0ff;
 
   font-size: 10px;
+
   font-weight: 900;
 
   letter-spacing: 0.18em;
@@ -1123,6 +1562,7 @@ button:focus-visible {
   margin: 0;
 
   font-size: clamp(25px, 7vw, 32px);
+
   line-height: 1;
 
   font-weight: 950;
@@ -1138,6 +1578,7 @@ button:focus-visible {
   color: rgba(255, 255, 255, 0.5);
 
   font-size: 12px;
+
   line-height: 1.5;
 
   font-weight: 600;
@@ -1145,7 +1586,9 @@ button:focus-visible {
 
 .success-actions {
   display: flex;
+
   flex-direction: column;
+
   gap: 8px;
 }
 
@@ -1159,9 +1602,11 @@ button:focus-visible {
   cursor: pointer;
 
   font-size: 12px;
+
   font-weight: 900;
 
-  transition: transform 0.14s ease;
+  transition:
+    transform 0.14s ease;
 }
 
 .success-actions button:active {
@@ -1195,6 +1640,18 @@ button:focus-visible {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
   }
 
   to {
@@ -1356,21 +1813,35 @@ button:focus-visible {
 @keyframes soediniLineComplete {
   0% {
     opacity: 0.55;
-    filter: drop-shadow(0 0 3px currentColor);
+
+    filter:
+      drop-shadow(
+        0 0 3px currentColor
+      );
   }
 
   50% {
     opacity: 1;
+
     filter:
-      drop-shadow(0 0 7px currentColor)
-      drop-shadow(0 0 17px currentColor);
+      drop-shadow(
+        0 0 7px currentColor
+      )
+      drop-shadow(
+        0 0 17px currentColor
+      );
   }
 
   100% {
     opacity: 0.94;
+
     filter:
-      drop-shadow(0 0 4px rgba(255, 255, 255, 0.15))
-      drop-shadow(0 0 8px currentColor);
+      drop-shadow(
+        0 0 4px rgba(255, 255, 255, 0.15)
+      )
+      drop-shadow(
+        0 0 8px currentColor
+      );
   }
 }
 
@@ -1405,17 +1876,27 @@ button:focus-visible {
   }
 
   .levels-page > section {
-    margin-bottom: 26px !important;
+    margin-bottom: 25px !important;
   }
 
   .levels-page > section > div:first-child {
     margin-bottom: 12px !important;
     padding: 16px !important;
-    border-radius: 18px !important;
+    border-radius: 19px !important;
   }
 
   .levels-page > section > div:first-child > div:first-child > div:nth-child(2) {
-    font-size: 23px !important;
+    font-size: 27px !important;
+  }
+
+  .levels-page > section:not(:has(.level-grid)) > div:first-child {
+    min-height: 138px;
+    padding: 20px !important;
+  }
+
+  .levels-page > section:not(:has(.level-grid)) > div:first-child::after {
+    right: 20px;
+    font-size: 24px;
   }
 
   .level-grid {
@@ -1438,8 +1919,10 @@ button:focus-visible {
   .level-status {
     width: 16px;
     height: 16px;
+
     top: 5px;
     right: 5px;
+
     font-size: 8px;
   }
 
@@ -1454,7 +1937,9 @@ button:focus-visible {
 
   .back-button {
     min-height: 37px;
+
     padding: 7px 8px;
+
     font-size: 9px;
   }
 
@@ -1468,7 +1953,9 @@ button:focus-visible {
 
   .game-progress {
     min-width: 43px;
+
     height: 37px !important;
+
     font-size: 11px;
   }
 
@@ -1478,7 +1965,9 @@ button:focus-visible {
 
   .stats > span {
     min-width: 67px;
+
     padding: 5px 7px;
+
     font-size: 8px;
   }
 
@@ -1492,15 +1981,21 @@ button:focus-visible {
 
   .controls button {
     min-height: 35px;
+
     padding: 6px 8px;
+
     border-radius: 10px;
+
     font-size: 8px;
   }
 
   .board {
     margin-top: 9px;
+
     padding: 5px;
+
     gap: 3px;
+
     border-radius: 19px;
   }
 
@@ -1520,17 +2015,20 @@ button:focus-visible {
 
   .hint {
     font-size: 8px;
+
     margin-top: 7px;
   }
 
   .success-modal {
     padding: 27px 17px 18px;
+
     border-radius: 23px;
   }
 
   .success-icon {
     width: 63px;
     height: 63px;
+
     font-size: 27px;
   }
 
@@ -1570,7 +2068,9 @@ button:focus-visible {
 
   .back-button {
     max-width: 84px;
+
     overflow: hidden;
+
     white-space: nowrap;
   }
 }
