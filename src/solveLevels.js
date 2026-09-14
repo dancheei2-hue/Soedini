@@ -749,10 +749,12 @@ for (
   const level =
     GENERATED_LEVELS[i];
 
-  console.log(
-    `Проверяем уровень ${level.id}...`
-  );
+  const levelNumber = i + 1;
 
+  console.log(
+    `Проверяем уровень ${levelNumber}...`
+  );
+  
   const result =
     solveLevel(level);
 
