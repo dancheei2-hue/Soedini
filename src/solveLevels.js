@@ -12,9 +12,15 @@ let multiple = 0;
 let unique = 0;
 let timeout = 0;
 
-LEVELS.forEach((level, index) => {
+const multipleLevels = [];
+const timeoutLevels = [];
+const invalidLevels = [];
+
+GENERATED_LEVELS.forEach((level, index) => {
+  const levelNumber = index + 1;
+
   console.log(
-    `Проверяем уровень ${index + 1}...`
+    `Проверяем уровень ${levelNumber}...`
   );
 
   const result =
@@ -23,64 +29,172 @@ LEVELS.forEach((level, index) => {
   switch (result.status) {
     case "invalid":
       console.log(
-        `✗ Уровень ${index + 1}: записанное решение некорректно`
+        `✗ Уровень ${levelNumber}: записанное решение некорректно`
       );
+
       invalid++;
+      invalidLevels.push(levelNumber);
       break;
 
     case "multiple":
       console.log(
-        `⚠ Уровень ${index + 1}: найдено несколько решений`
+        `⚠ Уровень ${levelNumber}: найдено несколько решений`
       );
+
       multiple++;
+      multipleLevels.push(levelNumber);
       break;
 
     case "unique":
       console.log(
-        `✓ Уровень ${index + 1}: уникальное решение`
+        `✓ Уровень ${levelNumber}: уникальное решение`
       );
+
       unique++;
       break;
 
     case "timeout":
       console.log(
-        `⏱ Уровень ${index + 1}: не удалось проверить уникальность за лимит времени`
+        `⏱ Уровень ${levelNumber}: не удалось проверить уникальность за лимит времени`
       );
+
       timeout++;
+      timeoutLevels.push(levelNumber);
       break;
 
     default:
       console.log(
-        `? Уровень ${index + 1}: неизвестный статус`
+        `? Уровень ${levelNumber}: неизвестный статус "${result.status}"`
       );
+
+      timeout++;
+      timeoutLevels.push(levelNumber);
+      break;
+  }
+
+  if (
+    Number.isFinite(result.elapsedMs)
+  ) {
+    console.log(
+      `   Время: ${result.elapsedMs} мс`
+    );
+  }
+
+  if (
+    Number.isFinite(result.nodes)
+  ) {
+    console.log(
+      `   Узлов поиска: ${result.nodes}`
+    );
   }
 
   console.log("");
 });
 
+
 console.log(
-  "=== ИТОГ ==="
+  "===================================="
 );
 
 console.log(
-  `Уникальных: ${unique}`
+  "ИТОГ ПРОВЕРКИ"
 );
 
 console.log(
-  `С несколькими решениями: ${multiple}`
+  "===================================="
+);
+
+console.log("");
+
+console.log(
+  `Всего уровней: ${GENERATED_LEVELS.length}`
 );
 
 console.log(
-  `Неисправных: ${invalid}`
+  `Уникальных решений: ${unique}`
 );
 
 console.log(
-  `Не проверено по времени: ${timeout}`
+  `Несколько решений: ${multiple}`
 );
+
+console.log(
+  `Некорректных уровней: ${invalid}`
+);
+
+console.log(
+  `Timeout: ${timeout}`
+);
+
+console.log("");
+
 
 if (
-  invalid > 0 ||
-  multiple > 0
+  multipleLevels.length > 0
 ) {
+  console.log(
+    "Уровни с несколькими решениями:"
+  );
+
+  console.log(
+    multipleLevels.join(", ")
+  );
+
+  console.log("");
+}
+
+
+if (
+  timeoutLevels.length > 0
+) {
+  console.log(
+    "Уровни, которые не удалось доказать:"
+  );
+
+  console.log(
+    timeoutLevels.join(", ")
+  );
+
+  console.log("");
+}
+
+
+if (
+  invalidLevels.length > 0
+) {
+  console.log(
+    "Некорректные уровни:"
+  );
+
+  console.log(
+    invalidLevels.join(", ")
+  );
+
+  console.log("");
+}
+
+
+/*
+ * Workflow должен считаться успешным
+ * только если каждый уровень проверен
+ * и имеет ровно одно решение.
+ */
+if (
+  invalid > 0 ||
+  multiple > 0 ||
+  timeout > 0
+) {
+  console.log(
+    "ПРОВЕРКА НЕ ПРОЙДЕНА."
+  );
+
   process.exitCode = 1;
+} else {
+  console.log(
+    "ПРОВЕРКА ПРОЙДЕНА."
+  );
+
+  console.log(
+    "Все уровни имеют единственное решение."
+  );
 }
