@@ -1,97 +1,251 @@
 /* =========================================
-   PREMIUM GAME HUD
+   SOEDINI — MOBILE GAME UI
    ========================================= */
 
 .game-screen {
   position: relative;
+  width: 100%;
+  min-height: 100svh;
+  padding: 8px 12px 12px;
   overflow-x: hidden;
-  min-height: 100dvh;
-  padding-bottom: 24px;
-}
-
-.game-screen::before {
-  content: "";
-  position: absolute;
-  width: 420px;
-  height: 420px;
-  top: -190px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: rgba(77, 112, 255, 0.13);
-  filter: blur(80px);
-  pointer-events: none;
 }
 
 
 /* =========================================
-   КАРТОЧКА-ИНСТРУКЦИЯ
+   ВЕРХНЯЯ ПАНЕЛЬ
    ========================================= */
 
-.game-progress {
-  position: relative !important;
+.game-header {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
 
-  width: min(560px, calc(100vw - 96px)) !important;
-  min-height: 76px !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
 
-  margin: 8px auto 12px !important;
-  padding: 17px 22px 17px 70px !important;
+  column-gap: 8px;
 
-  border: 1px solid rgba(115, 137, 205, 0.26) !important;
-  border-radius: 22px !important;
+  position: relative;
+  z-index: 10;
+}
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(48, 57, 95, 0.58),
-      rgba(25, 30, 53, 0.52)
-    ) !important;
 
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 14px 40px rgba(0, 0, 0, 0.22),
-    0 0 30px rgba(77, 112, 255, 0.07) !important;
+/* Кнопка "Уровни" */
+
+.game-header .back-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+
+/* Центральная часть */
+
+.game-header .game-title {
+  min-width: 0;
+  width: 100%;
+
+  text-align: center;
 
   overflow: hidden;
 }
 
 
-/* Иконка цели */
+/* Заголовок */
+
+.game-header .game-logo {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Монеты */
+
+.game-header .coin-display {
+  position: relative;
+
+  min-width: 68px;
+  max-width: 82px;
+
+  height: 38px;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 5px 9px !important;
+
+  border: 1px solid rgba(255, 211, 77, 0.68) !important;
+  border-radius: 999px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(65, 58, 34, 0.9),
+      rgba(28, 29, 35, 0.94)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 18px rgba(255, 211, 77, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.22) !important;
+
+  overflow: visible;
+}
+
+
+/* Монета */
+
+.game-header .coin-icon {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  border: 2px solid #fff0a0;
+
+  background:
+    radial-gradient(
+      circle at 34% 28%,
+      #fffbdc 0%,
+      #ffe879 20%,
+      #ffd34d 45%,
+      #e4a817 73%,
+      #a86d00 100%
+    );
+
+  color: transparent !important;
+
+  font-size: 0;
+
+  filter:
+    drop-shadow(
+      0 0 7px rgba(255, 211, 77, 0.62)
+    );
+
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 4px rgba(118, 72, 0, 0.38);
+}
+
+
+.game-header .coin-icon::after {
+  content: "•";
+
+  color: rgba(255, 248, 201, 0.95);
+
+  font-size: 13px;
+
+  text-shadow:
+    0 0 5px rgba(255, 255, 255, 0.55);
+}
+
+
+/* Число */
+
+.game-header .coin-display > span:nth-child(2) {
+  color: #fff !important;
+
+  font-size: 15px !important;
+  line-height: 1;
+
+  font-weight: 900 !important;
+}
+
+
+/* Если есть подпись — скрываем */
+
+.game-header .coin-display > span:last-child {
+  display: none !important;
+}
+
+
+/* =========================================
+   КАРТОЧКА ИНСТРУКЦИИ
+   ========================================= */
+
+.game-progress {
+  position: relative !important;
+
+  width: min(
+    520px,
+    calc(100% - 92px)
+  ) !important;
+
+  min-height: 58px !important;
+
+  margin: 7px auto 9px !important;
+
+  padding: 12px 14px 12px 52px !important;
+
+  border:
+    1px solid
+    rgba(115, 137, 205, 0.25) !important;
+
+  border-radius: 18px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(48, 57, 95, 0.58),
+      rgba(25, 30, 53, 0.5)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.2) !important;
+
+  overflow: hidden;
+}
+
+
+/* Иконка */
 
 .game-progress::before {
   content: "◎";
 
   position: absolute;
-  left: 20px;
+
+  left: 15px;
   top: 50%;
 
   transform: translateY(-50%);
 
-  width: 36px;
-  height: 36px;
+  width: 27px;
+  height: 27px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 2px solid #4d96ff;
+  border:
+    2px solid
+    #4d96ff;
+
   border-radius: 50%;
 
   color: #8cc1ff;
 
-  font-size: 23px;
-  line-height: 1;
+  font-size: 18px;
 
   text-shadow:
-    0 0 12px rgba(77, 150, 255, 0.75);
+    0 0 10px rgba(77, 150, 255, 0.7);
 
   box-shadow:
-    0 0 0 5px rgba(77, 150, 255, 0.06),
-    0 0 22px rgba(77, 150, 255, 0.24);
+    0 0 0 4px rgba(77, 150, 255, 0.05),
+    0 0 16px rgba(77, 150, 255, 0.2);
 }
 
 
-/* Текст инструкции */
+/* Текст */
 
 .game-progress::after {
   content:
@@ -99,25 +253,26 @@
 
   position: absolute;
 
-  left: 70px;
-  right: 18px;
+  left: 52px;
+  right: 12px;
   top: 50%;
 
   transform: translateY(-50%);
 
-  color: rgba(235, 239, 255, 0.82);
+  color:
+    rgba(235, 239, 255, 0.78);
 
-  font-size: 14px;
-  line-height: 1.35;
+  font-size: 11px;
+
+  line-height: 1.3;
+
   font-weight: 650;
-
-  letter-spacing: 0.01em;
 
   pointer-events: none;
 }
 
 
-/* Старый индикатор внутри блока больше не показываем */
+/* Скрываем старое содержимое */
 
 .game-progress > * {
   opacity: 0 !important;
@@ -125,233 +280,288 @@
 
 
 /* =========================================
-   ЗОЛОТАЯ МОНЕТА
+   СТАТИСТИКА
    ========================================= */
 
-.game-header .coin-display {
-  position: relative;
-
-  min-width: 84px;
-
-  justify-content: center;
-
-  gap: 7px;
-
-  padding: 8px 13px 8px 10px;
-
-  border: 1px solid rgba(255, 211, 77, 0.72) !important;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(58, 53, 34, 0.82),
-      rgba(28, 29, 35, 0.9)
-    ) !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 18px rgba(255, 211, 77, 0.16),
-    0 12px 28px rgba(0, 0, 0, 0.25) !important;
+.game .info {
+  margin-top: 6px !important;
+  margin-bottom: 8px !important;
 }
 
-
-/* Сам кружок превращается в монету */
-
-.game-header .coin-icon {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  border: 2px solid #fff1a3;
-
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      #fff8c9 0 14%,
-      #ffd34d 36%,
-      #e5a915 72%,
-      #a96d00 100%
-    );
-
-  color: transparent !important;
-
-  filter:
-    drop-shadow(
-      0 0 8px rgba(255, 211, 77, 0.65)
-    );
-
-  box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.75),
-    inset -2px -2px 4px rgba(128, 73, 0, 0.35);
-
-  font-size: 0;
-
-  position: relative;
+.game .stats {
+  gap: 7px !important;
 }
 
+.game .stats > * {
+  padding:
+    7px 12px !important;
 
-/* Блик на монете */
+  border-radius:
+    14px !important;
 
-.game-header .coin-icon::after {
-  content: "●";
-
-  color: rgba(255, 246, 189, 0.95);
-
-  font-size: 9px;
-
-  text-shadow:
-    0 0 5px rgba(255, 255, 255, 0.5);
-}
-
-
-/* Число монет */
-
-.game-header .coin-display > span:nth-child(2) {
-  color: #fff !important;
-
-  font-size: 17px !important;
-  line-height: 1;
-
-  font-weight: 900 !important;
-}
-
-
-/* Убираем лишнюю подпись */
-
-.game-header .coin-display > span:last-child {
-  display: none;
+  font-size:
+    11px !important;
 }
 
 
 /* =========================================
-   НИЖНЯЯ ДЕКОРАТИВНАЯ ЗОНА
+   КНОПКИ
+   ========================================= */
+
+.game .controls {
+  gap: 7px !important;
+  margin-bottom: 10px !important;
+}
+
+.game .controls button {
+  min-height: 42px;
+
+  padding:
+    8px 13px !important;
+
+  border-radius:
+    14px !important;
+
+  font-size:
+    12px !important;
+}
+
+
+/* =========================================
+   ИГРОВОЕ ПОЛЕ
+   ========================================= */
+
+/*
+   Главное изменение.
+
+   Поле ограничено одновременно:
+   - шириной телефона;
+   - безопасной высотой экрана.
+
+   Поэтому 7x7, 8x8 и 9x9
+   не будут раздувать страницу.
+*/
+
+.board {
+  width:
+    min(
+      100%,
+      calc(100vw - 28px),
+      500px
+    ) !important;
+
+  height:
+    auto !important;
+
+  aspect-ratio:
+    1 / 1 !important;
+
+  max-height:
+    min(
+      calc(100vw - 28px),
+      500px
+    ) !important;
+
+  margin:
+    0 auto !important;
+
+  display:
+    grid !important;
+
+  overflow:
+    hidden !important;
+}
+
+
+/* Ячейки */
+
+.board .cell {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+
+/* =========================================
+   НИЖНЯЯ ЗОНА
    ========================================= */
 
 .game-screen::after {
   content:
-    "ЛОГИКА — ЭТО СПОРТ ДЛЯ МОЗГА.   •   МАЛЕНЬКИЕ ШАГИ ВЕДУТ К БОЛЬШИМ ПОБЕДАМ   •   СОЕДИНИ";
+    "ЛОГИКА • ФОКУС • ПОБЕДА";
 
   display: block;
 
-  width: min(720px, calc(100% - 36px));
+  width:
+    min(
+      560px,
+      calc(100% - 30px)
+    );
 
-  min-height: 170px;
+  height: 54px;
 
-  margin: 28px auto 0;
+  margin:
+    10px auto 0;
 
-  padding: 72px 24px 24px;
+  padding:
+    20px 10px 0;
 
   border-top:
-    1px solid rgba(98, 121, 191, 0.18);
+    1px solid
+    rgba(98, 121, 191, 0.14);
 
   border-radius:
     50% 50% 0 0 /
-    28% 28% 0 0;
+    35% 35% 0 0;
 
   color:
-    rgba(151, 174, 235, 0.55);
+    rgba(151, 174, 235, 0.38);
 
-  text-align: center;
+  text-align:
+    center;
 
-  font-size: 11px;
-  line-height: 2.2;
+  font-size:
+    8px;
 
-  font-weight: 800;
+  line-height:
+    1;
 
-  letter-spacing: 0.14em;
+  font-weight:
+    850;
+
+  letter-spacing:
+    0.2em;
 
   background:
     radial-gradient(
-      circle at 50% 88%,
-      rgba(62, 100, 210, 0.14),
-      transparent 34%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(25, 34, 70, 0.02),
-      rgba(21, 31, 67, 0.28)
+      ellipse at 50% 100%,
+      rgba(62, 100, 210, 0.11),
+      transparent 68%
     );
 
-  box-shadow:
-    inset 0 45px 65px
-    rgba(24, 43, 97, 0.06);
-
-  pointer-events: none;
+  pointer-events:
+    none;
 }
 
 
 /* =========================================
-   МОБИЛЬНАЯ ВЕРСИЯ
+   КОРОТКИЙ ЭКРАН
    ========================================= */
 
-@media (max-width: 600px) {
+@media (max-height: 760px) {
+
+  .game-screen {
+    padding-top: 4px;
+  }
+
+  .game-progress {
+    min-height: 50px !important;
+
+    margin-top: 4px !important;
+    margin-bottom: 6px !important;
+
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
+  }
+
+  .game-progress::before {
+    width: 24px;
+    height: 24px;
+
+    left: 13px;
+
+    font-size: 16px;
+  }
+
+  .game-progress::after {
+    left: 47px;
+
+    font-size: 10px;
+  }
+
+  .game .info {
+    margin-top: 3px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .game .controls {
+    margin-bottom: 6px !important;
+  }
+
+  .game .controls button {
+    min-height: 37px;
+
+    padding:
+      6px 10px !important;
+
+    font-size:
+      11px !important;
+  }
+
+  .board {
+    max-width:
+      min(
+        calc(100vw - 24px),
+        calc(100svh - 330px)
+      ) !important;
+  }
+
+  .game-screen::after {
+    display: none;
+  }
+}
+
+
+/* =========================================
+   ОЧЕНЬ УЗКИЙ ТЕЛЕФОН
+   ========================================= */
+
+@media (max-width: 380px) {
+
+  .game-screen {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .game-header {
+    column-gap: 5px;
+  }
+
+  .game-header .back-button {
+    padding:
+      8px 10px !important;
+
+    font-size:
+      11px !important;
+  }
+
+  .game-header .coin-display {
+    min-width: 62px;
+    max-width: 68px;
+
+    padding:
+      5px 7px !important;
+  }
+
+  .game-header .coin-icon {
+    width: 19px;
+    height: 19px;
+    min-width: 19px;
+  }
+
+  .game-header .coin-display > span:nth-child(2) {
+    font-size: 14px !important;
+  }
 
   .game-progress {
     width:
-      calc(100vw - 96px) !important;
-
-    min-height:
-      70px !important;
-
-    padding-left:
-      62px !important;
+      calc(100% - 72px) !important;
   }
 
+  .board {
+    width:
+      calc(100vw - 18px) !important;
 
-  .game-progress::before {
-    left: 17px;
-
-    width: 32px;
-    height: 32px;
-
-    font-size: 20px;
-  }
-
-
-  .game-progress::after {
-    left: 62px;
-    right: 13px;
-
-    font-size: 12px;
-  }
-
-
-  .game-header .coin-display {
-    min-width: 72px;
-
-    padding:
-      7px 10px;
-  }
-
-
-  .game-header .coin-icon {
-    width: 22px;
-    height: 22px;
-
-    min-width: 22px;
-  }
-
-
-  .game-header .coin-display > span:nth-child(2) {
-    font-size: 16px !important;
-  }
-
-
-  .game-screen::after {
-    min-height: 155px;
-
-    margin-top: 22px;
-
-    padding-top: 60px;
-
-    font-size: 9px;
-
-    line-height: 2;
+    max-width:
+      calc(100vw - 18px) !important;
   }
 }
