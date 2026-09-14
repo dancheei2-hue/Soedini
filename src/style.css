@@ -722,7 +722,7 @@ button:focus-visible {
    ================================= */
 
 .board {
-  width: min(620px, 100%);
+  width: min(620px, 100%, calc(100svh - 285px));
   aspect-ratio: 1 / 1;
 
   position: relative;
@@ -1914,13 +1914,13 @@ button:focus-visible {
       calc(100% - 32px)
     );
 
-  height: 45px;
+  height: 24px;
 
   margin:
-    12px auto 0;
+    6px auto 0;
 
   padding-top:
-    17px;
+    7px;
 
   border-top:
     1px solid
@@ -2091,13 +2091,19 @@ button:focus-visible {
 
   .game-screen .controls button {
     min-height:
-      36px;
+      34px;
 
     padding:
-      6px 9px !important;
+      5px 8px !important;
 
     font-size:
-      10px !important;
+      9px !important;
+  }
+
+  .game-screen .hint {
+    margin-top: 5px !important;
+    padding: 5px 8px !important;
+    font-size: 8px !important;
   }
 
 
@@ -2105,13 +2111,13 @@ button:focus-visible {
     width:
       min(
         calc(100vw - 20px),
-        calc(100svh - 315px)
+        calc(100svh - 300px)
       ) !important;
 
     max-width:
       min(
         calc(100vw - 20px),
-        calc(100svh - 315px)
+        calc(100svh - 300px)
       ) !important;
   }
 
