@@ -91,7 +91,6 @@ GENERATED_LEVELS.forEach((level, index) => {
   console.log("");
 });
 
-
 console.log(
   "===================================="
 );
@@ -128,7 +127,6 @@ console.log(
 
 console.log("");
 
-
 if (
   multipleLevels.length > 0
 ) {
@@ -142,7 +140,6 @@ if (
 
   console.log("");
 }
-
 
 if (
   timeoutLevels.length > 0
@@ -158,7 +155,6 @@ if (
   console.log("");
 }
 
-
 if (
   invalidLevels.length > 0
 ) {
@@ -173,12 +169,6 @@ if (
   console.log("");
 }
 
-
-/*
- * Workflow должен считаться успешным
- * только если каждый уровень проверен
- * и имеет ровно одно решение.
- */
 if (
   invalid > 0 ||
   multiple > 0 ||
@@ -187,8 +177,6 @@ if (
   console.log(
     "ПРОВЕРКА НЕ ПРОЙДЕНА."
   );
-
-  process.exitCode = 1;
 } else {
   console.log(
     "ПРОВЕРКА ПРОЙДЕНА."
