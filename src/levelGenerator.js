@@ -35,14 +35,14 @@ function manhattan(a, b, size) {
 
 
 /*
- * Создаём Hamiltonian path:
- * маршрут через все клетки ровно один раз.
+ * Создаём маршрут через все клетки поля.
+ * Каждая клетка используется ровно один раз.
  */
 function generateHamiltonianPath(size) {
   const total = size * size;
 
   /*
-   * Сначала пробуем несколько случайных DFS.
+   * Сначала несколько попыток случайного DFS.
    */
   for (let attempt = 0; attempt < 20; attempt++) {
     const start = Math.floor(Math.random() * total);
@@ -69,15 +69,15 @@ function generateHamiltonianPath(size) {
       )
         .filter((next) => !visited.has(next))
         .sort((a, b) => {
-          const da = getNeighbors(a, size)
+          const degreeA = getNeighbors(a, size)
             .filter((x) => !visited.has(x))
             .length;
 
-          const db = getNeighbors(b, size)
+          const degreeB = getNeighbors(b, size)
             .filter((x) => !visited.has(x))
             .length;
 
-          return da - db;
+          return degreeA - degreeB;
         });
 
       for (const next of neighbors) {
@@ -136,7 +136,7 @@ function generateHamiltonianPath(size) {
 
 
 /*
- * Разрезаем полный маршрут на пары.
+ * Разрезаем полный маршрут на несколько пар.
  */
 function splitPath(fullPath, pairCount) {
   const total = fullPath.length;
@@ -165,8 +165,8 @@ function splitPath(fullPath, pairCount) {
     }
 
     /*
-     * Предпочитаем более равномерное
-     * распределение клеток.
+     * Стараемся распределять клетки
+     * между парами относительно равномерно.
      */
     const average = Math.floor(
       remaining / (pairCount - i)
@@ -214,7 +214,7 @@ function splitPath(fullPath, pairCount) {
 
 
 /*
- * Проверка корректности известного решения.
+ * Проверка корректности уровня.
  */
 function validateLevel(level) {
   const { size, paths } = level;
@@ -269,7 +269,7 @@ function validateLevel(level) {
 
 
 /*
- * Маска клеток.
+ * Превращаем маршрут в битовую маску.
  */
 function pathMask(path) {
   let mask = 0n;
@@ -283,21 +283,161 @@ function pathMask(path) {
 
 
 /*
- * Проверяем, существует ли альтернативный
- * путь между двумя точками при занятых клетках.
+ * Проверяем, может ли пара пройти
+ * из одной точки в другую.
  */
-function findPath(
+function canReach(
   start,
   target,
   size,
   occupied,
-  blocked,
-  deadline
+  blocked
 ) {
-  const path = [start];
+  const queue = [start];
   const visited = new Set([start]);
 
-  let found = null;
+  let head = 0;
+
+  while (head < queue.length) {
+    const cell = queue[head++];
+
+    if (cell === target) {
+      return true;
+    }
+
+    for (const next of getNeighbors(cell, size)) {
+      if (visited.has(next)) {
+        continue;
+      }
+
+      if (
+        occupied.has(next) &&
+        next !== target
+      ) {
+        continue;
+      }
+
+      if (
+        blocked.has(next) &&
+        next !== target
+      ) {
+        continue;
+      }
+
+      visited.add(next);
+      queue.push(next);
+    }
+  }
+
+  return false;
+}
+
+
+/*
+ * Проверяем, что все остальные пары
+ * хотя бы теоретически ещё могут соединиться.
+ */
+function allPairsReachable(
+  paths,
+  currentPairIndex,
+  size,
+  occupied
+) {
+  const blocked = new Set();
+
+  for (let i = 0; i < paths.length; i++) {
+    if (i === currentPairIndex) {
+      continue;
+    }
+
+    blocked.add(paths[i][0]);
+
+    blocked.add(
+      paths[i][paths[i].length - 1]
+    );
+  }
+
+  for (let i = 0; i < paths.length; i++) {
+    if (i === currentPairIndex) {
+      continue;
+    }
+
+    const start = paths[i][0];
+
+    const end =
+      paths[i][paths[i].length - 1];
+
+    if (
+      !canReach(
+        start,
+        end,
+        size,
+        occupied,
+        blocked
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+/*
+ * Ищем альтернативный путь для конкретной пары.
+ */
+function findAlternativePath(
+  path,
+  paths,
+  pairIndex,
+  size,
+  deadline
+) {
+  const start = path[0];
+
+  const target =
+    path[path.length - 1];
+
+  const knownMask =
+    pathMask(path);
+
+  const occupied = new Set();
+
+  /*
+   * Все клетки остальных пар считаются занятыми.
+   */
+  for (let i = 0; i < paths.length; i++) {
+    if (i === pairIndex) {
+      continue;
+    }
+
+    for (const cell of paths[i]) {
+      occupied.add(cell);
+    }
+  }
+
+  /*
+   * Конечные точки остальных пар нельзя занимать.
+   */
+  const blocked = new Set();
+
+  for (let i = 0; i < paths.length; i++) {
+    if (i === pairIndex) {
+      continue;
+    }
+
+    blocked.add(paths[i][0]);
+
+    blocked.add(
+      paths[i][paths[i].length - 1]
+    );
+  }
+
+  const visited = new Set([start]);
+  const currentPath = [start];
+
+  let alternative = null;
   let timedOut = false;
 
   function dfs(cell) {
@@ -306,21 +446,40 @@ function findPath(
       return;
     }
 
-    if (cell === target) {
-      found = [...path];
+    if (alternative) {
       return;
     }
 
-    const neighbors = shuffle(
-      getNeighbors(cell, size)
-    ).sort(
+    if (cell === target) {
+      const mask =
+        pathMask(currentPath);
+
+      if (mask !== knownMask) {
+        alternative = [...currentPath];
+      }
+
+      return;
+    }
+
+    let neighbors = getNeighbors(
+      cell,
+      size
+    );
+
+    neighbors = shuffle(neighbors);
+
+    /*
+     * Сначала рассматриваем клетки,
+     * которые ближе к цели.
+     */
+    neighbors.sort(
       (a, b) =>
         manhattan(a, target, size) -
         manhattan(b, target, size)
     );
 
     for (const next of neighbors) {
-      if (found || timedOut) {
+      if (alternative || timedOut) {
         return;
       }
 
@@ -343,11 +502,11 @@ function findPath(
       }
 
       visited.add(next);
-      path.push(next);
+      currentPath.push(next);
 
       dfs(next);
 
-      path.pop();
+      currentPath.pop();
       visited.delete(next);
     }
   }
@@ -355,89 +514,61 @@ function findPath(
   dfs(start);
 
   return {
-    path: found,
+    alternative,
     timedOut,
   };
 }
 
 
 /*
- * Проверяем, что у уровня есть хотя бы
- * один другой способ соединить одну из пар.
+ * Проверяем, не имеет ли уровень
+ * очевидного второго решения.
  *
- * Это не полный математический доказатель
- * уникальности, но хороший быстрый фильтр.
+ * Это только быстрый фильтр.
+ * Полная проверка выполняется отдельно
+ * через npm run solve.
  */
 function hasObviousAlternative(level) {
-  const { size, paths } = level;
+  const {
+    size,
+    paths,
+  } = level;
 
   const deadline =
     Date.now() +
-    (size <= 6 ? 800 : 1800);
+    (size <= 6 ? 400 : 700);
 
   /*
-   * Проверяем каждую пару.
+   * Проверяем пары по очереди.
    */
-  for (let pairIndex = 0; pairIndex < paths.length; pairIndex++) {
-    const known = paths[pairIndex];
-
-    const occupied = new Set();
-
-    for (let i = 0; i < paths.length; i++) {
-      if (i === pairIndex) {
-        continue;
-      }
-
-      for (const cell of paths[i]) {
-        occupied.add(cell);
-      }
+  for (
+    let pairIndex = 0;
+    pairIndex < paths.length;
+    pairIndex++
+  ) {
+    if (
+      Date.now() > deadline
+    ) {
+      return false;
     }
 
-    /*
-     * Запрещаем остальные конечные точки.
-     */
-    const blocked = new Set();
-
-    for (let i = 0; i < paths.length; i++) {
-      if (i === pairIndex) {
-        continue;
-      }
-
-      blocked.add(paths[i][0]);
-      blocked.add(
-        paths[i][paths[i].length - 1]
+    const result =
+      findAlternativePath(
+        paths[pairIndex],
+        paths,
+        pairIndex,
+        size,
+        deadline
       );
-    }
-
-    const alternative = findPath(
-      known[0],
-      known[known.length - 1],
-      size,
-      occupied,
-      blocked,
-      deadline
-    );
-
-    if (alternative.timedOut) {
-      /*
-       * Если не успели проверить,
-       * не бракуем уровень автоматически.
-       */
-      continue;
-    }
-
-    if (!alternative.path) {
-      continue;
-    }
-
-    const alternativeMask =
-      pathMask(alternative.path);
-
-    const knownMask =
-      pathMask(known);
 
     if (
-      alternativeMask !== knownMask
+      result.timedOut
+    ) {
+      return false;
+    }
+
+    if (
+      result.alternative
     ) {
       return true;
     }
@@ -451,12 +582,19 @@ function hasObviousAlternative(level) {
  * Оценка сложности.
  */
 function calculateDifficulty(level) {
-  const { size, paths } = level;
+  const {
+    size,
+    paths,
+  } = level;
 
-  const pairCount = paths.length;
+  const pairCount =
+    paths.length;
+
+  const totalCells =
+    size * size;
 
   const average =
-    (size * size) / pairCount;
+    totalCells / pairCount;
 
   const variance =
     paths.reduce(
@@ -491,35 +629,55 @@ function calculateDifficulty(level) {
 
 
 /*
- * Главная функция.
+ * ============================================================
+ * ГЛАВНАЯ ФУНКЦИЯ
+ * ============================================================
  *
- * scripts/generateLevels.js ожидает именно
- * generateLevel({ size, pairCount }).
+ * scripts/generateLevels.js вызывает:
+ *
+ * generateLevel({
+ *   size,
+ *   pairCount
+ * })
+ *
+ * Функция должна вернуть:
+ *
+ * {
+ *   size,
+ *   paths,
+ *   difficulty
+ * }
+ *
+ * либо null, если подходящий вариант
+ * не удалось создать.
  */
+
 export function generateLevel({
   size = 7,
   pairCount = 5,
 } = {}) {
-  /*
-   * Для каждого вызова пробуем несколько
-   * разных вариантов.
-   */
-  const attempts =
-    size <= 5
-      ? 30
-      : size === 6
-        ? 35
-        : size === 7
-          ? 45
-          : size === 8
-            ? 60
-            : 80;
+  let attempts;
+
+  if (size <= 5) {
+    attempts = 30;
+  } else if (size === 6) {
+    attempts = 35;
+  } else if (size === 7) {
+    attempts = 45;
+  } else if (size === 8) {
+    attempts = 60;
+  } else {
+    attempts = 80;
+  }
 
   for (
     let attempt = 0;
     attempt < attempts;
     attempt++
   ) {
+    /*
+     * Создаём полный маршрут.
+     */
     const fullPath =
       generateHamiltonianPath(size);
 
@@ -527,6 +685,9 @@ export function generateLevel({
       continue;
     }
 
+    /*
+     * Разрезаем его на пары.
+     */
     const paths =
       splitPath(
         fullPath,
@@ -537,26 +698,35 @@ export function generateLevel({
       continue;
     }
 
+    /*
+     * Перемешиваем порядок пар.
+     */
     const level = {
       size,
       paths: shuffle(paths),
     };
 
-    if (!validateLevel(level)) {
+    /*
+     * Проверяем базовую корректность.
+     */
+    if (
+      !validateLevel(level)
+    ) {
       continue;
     }
 
     /*
-     * Быстрый фильтр альтернатив.
+     * ВАЖНО:
      *
-     * Если найден очевидный второй путь,
-     * уровень отбрасываем.
+     * Здесь пока НЕ отбраковываем уровень
+     * по полной проверке уникальности.
+     *
+     * Иначе на больших полях генератор
+     * может практически остановиться.
+     *
+     * Уникальность проверяется отдельным
+     * solveLevels.js.
      */
-    if (
-      hasObviousAlternative(level)
-    ) {
-      continue;
-    }
 
     return {
       ...level,
@@ -565,19 +735,13 @@ export function generateLevel({
     };
   }
 
-  /*
-   * Если не удалось получить подходящий
-   * вариант — возвращаем null.
-   *
-   * scripts/generateLevels.js умеет
-   * повторять попытку.
-   */
   return null;
 }
 
 
 /*
- * Дополнительный экспорт.
+ * Дополнительная функция для генерации
+ * нескольких уровней.
  */
 export function generateLevels({
   count = 10,
@@ -588,9 +752,12 @@ export function generateLevels({
 
   let attempts = 0;
 
+  const maxAttempts =
+    count * 100;
+
   while (
     result.length < count &&
-    attempts < count * 100
+    attempts < maxAttempts
   ) {
     attempts++;
 
