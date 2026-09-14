@@ -2188,3 +2188,626 @@ button:focus-visible {
       calc(100vw - 14px) !important;
   }
 }
+
+/* =========================================================
+   FINAL UI OVERRIDES — STAGES + COINS
+   These rules match the actual App.jsx markup.
+   ========================================================= */
+
+/* ---------- STAGE HEADER ---------- */
+
+.level-stage .stage-header.stage-toggle {
+  width: 100% !important;
+  min-height: 82px !important;
+  margin: 0 !important;
+  padding: 14px 16px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+
+  appearance: none !important;
+  -webkit-appearance: none !important;
+
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 20px !important;
+
+  color: #fff !important;
+  text-align: left !important;
+  font: inherit !important;
+
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.075),
+      rgba(255,255,255,.025)) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.055),
+    0 12px 32px rgba(0,0,0,.18) !important;
+
+  cursor: pointer !important;
+}
+
+.level-stage.stage-1 .stage-header.stage-toggle {
+  border-color: rgba(107,203,119,.28) !important;
+}
+
+.level-stage.stage-2 .stage-header.stage-toggle {
+  border-color: rgba(77,150,255,.28) !important;
+}
+
+.level-stage.stage-3 .stage-header.stage-toggle {
+  border-color: rgba(255,217,61,.28) !important;
+}
+
+.level-stage.stage-4 .stage-header.stage-toggle {
+  border-color: rgba(255,140,66,.28) !important;
+}
+
+.level-stage.stage-5 .stage-header.stage-toggle {
+  border-color: rgba(166,108,255,.28) !important;
+}
+
+.level-stage .stage-header.stage-toggle:active {
+  transform: scale(.985) !important;
+}
+
+.level-stage .stage-main {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.level-stage .stage-badge {
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  height: 38px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 13px !important;
+
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+}
+
+.level-stage.stage-1 .stage-badge {
+  color: #8df09a !important;
+  background: rgba(107,203,119,.10) !important;
+  border-color: rgba(107,203,119,.20) !important;
+}
+
+.level-stage.stage-2 .stage-badge {
+  color: #8ab9ff !important;
+  background: rgba(77,150,255,.10) !important;
+  border-color: rgba(77,150,255,.20) !important;
+}
+
+.level-stage.stage-3 .stage-badge {
+  color: #ffe875 !important;
+  background: rgba(255,217,61,.10) !important;
+  border-color: rgba(255,217,61,.20) !important;
+}
+
+.level-stage.stage-4 .stage-badge {
+  color: #ffb17e !important;
+  background: rgba(255,140,66,.10) !important;
+  border-color: rgba(255,140,66,.20) !important;
+}
+
+.level-stage.stage-5 .stage-badge {
+  color: #c19cff !important;
+  background: rgba(166,108,255,.10) !important;
+  border-color: rgba(166,108,255,.20) !important;
+}
+
+.level-stage .stage-copy {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 3px !important;
+}
+
+.level-stage .stage-eyebrow {
+  display: block !important;
+  margin: 0 !important;
+
+  color: rgba(255,255,255,.38) !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: .18em !important;
+  text-transform: uppercase !important;
+}
+
+.level-stage .stage-copy strong {
+  display: block !important;
+  margin: 0 !important;
+
+  color: #fff !important;
+  font-size: 21px !important;
+  line-height: 1.05 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.035em !important;
+}
+
+.level-stage .stage-copy > span:last-child {
+  display: block !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+
+  color: rgba(255,255,255,.40) !important;
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+}
+
+.level-stage .stage-meta {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+
+.level-stage .stage-meta > strong {
+  color: var(--stage-color, #9aa8ff) !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.level-stage.stage-1 { --stage-color: #6bcb77; }
+.level-stage.stage-2 { --stage-color: #4d96ff; }
+.level-stage.stage-3 { --stage-color: #ffd93d; }
+.level-stage.stage-4 { --stage-color: #ff8c42; }
+.level-stage.stage-5 { --stage-color: #a66cff; }
+
+.level-stage .stage-chevron {
+  width: 25px !important;
+  height: 25px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 50% !important;
+
+  color: rgba(255,255,255,.48) !important;
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+/* ---------- STAGE CONTENT ---------- */
+
+.level-stage .stage-content {
+  width: 100% !important;
+  padding: 9px 2px 0 !important;
+}
+
+.level-stage .stage-progress-track {
+  width: 100% !important;
+  height: 4px !important;
+  margin: 0 0 9px !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.06) !important;
+}
+
+.level-stage .stage-progress-track .progress-fill {
+  height: 100% !important;
+  border-radius: inherit !important;
+}
+
+.level-stage .level-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0,1fr)) !important;
+  gap: 7px !important;
+}
+
+/* ---------- LOCKED STAGES ---------- */
+
+.level-stage.stage-locked .locked-stage-card {
+  position: relative !important;
+  min-height: 118px !important;
+  padding: 19px 18px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+
+  border: 1px solid rgba(255,255,255,.06) !important;
+  border-radius: 20px !important;
+
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.035),
+      rgba(255,255,255,.012)) !important;
+}
+
+.level-stage.stage-locked .locked-stage-icon {
+  position: absolute !important;
+  top: 17px !important;
+  right: 18px !important;
+  color: rgba(255,255,255,.18) !important;
+  font-size: 12px !important;
+}
+
+.level-stage.stage-locked .locked-stage-kicker {
+  color: rgba(255,255,255,.25) !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: .16em !important;
+}
+
+.level-stage.stage-locked .locked-stage-title {
+  margin-top: 5px !important;
+  color: rgba(255,255,255,.45) !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+.level-stage.stage-locked .locked-stage-text {
+  margin-top: 7px !important;
+  color: rgba(255,255,255,.25) !important;
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+}
+
+/* ---------- COIN DISPLAY ---------- */
+
+.game-screen .game-header > .coin-display {
+  width: auto !important;
+  min-width: 76px !important;
+  max-width: none !important;
+  flex-shrink: 0 !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+
+  padding: 6px 10px 6px 7px !important;
+
+  overflow: visible !important;
+  white-space: nowrap !important;
+
+  border: 1px solid rgba(255,211,77,.42) !important;
+  border-radius: 999px !important;
+
+  background: linear-gradient(145deg,
+    rgba(255,220,90,.12),
+    rgba(255,255,255,.035)) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 0 20px rgba(255,211,77,.08) !important;
+}
+
+.game-screen .game-header > .coin-display .coin-icon {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  flex: 0 0 22px !important;
+}
+
+.game-screen .game-header > .coin-display > span:nth-child(2) {
+  display: inline-block !important;
+  width: auto !important;
+  min-width: 16px !important;
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+
+  color: #fff !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+/* ---------- SMALL COIN ICONS IN BUTTONS ---------- */
+
+.coin-text {
+  display: inline-block !important;
+  width: 9px !important;
+  height: 9px !important;
+  min-width: 9px !important;
+  padding: 0 !important;
+  margin-left: 2px !important;
+
+  border-radius: 50% !important;
+  background: #ffd34d !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  vertical-align: middle !important;
+  box-shadow: 0 0 7px rgba(255,211,77,.55) !important;
+}
+
+/* ---------- STAGE COMPLETION WINDOW ---------- */
+
+.stage-success-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 120 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 18px !important;
+
+  background: rgba(3,4,10,.82) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.stage-success-modal {
+  position: relative !important;
+  width: min(390px, calc(100vw - 32px)) !important;
+  padding: 28px 22px 21px !important;
+
+  overflow: hidden !important;
+
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 27px !important;
+
+  background:
+    radial-gradient(circle at 50% 0%,
+      color-mix(in srgb, var(--success-stage-color) 16%, transparent),
+      transparent 58%),
+    #11141d !important;
+
+  box-shadow:
+    0 35px 100px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(255,255,255,.06) !important;
+
+  text-align: center !important;
+  animation: stageSuccessAppear .45s cubic-bezier(.17,.89,.32,1.2) both;
+}
+
+.stage-success-orbit {
+  position: absolute !important;
+  width: 210px !important;
+  height: 210px !important;
+  left: 50% !important;
+  top: -145px !important;
+  transform: translateX(-50%) !important;
+
+  border: 1px solid color-mix(in srgb, var(--success-stage-color) 35%, transparent) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 55px color-mix(in srgb, var(--success-stage-color) 16%, transparent) !important;
+}
+
+.stage-success-icon {
+  position: relative !important;
+  z-index: 2 !important;
+
+  width: 66px !important;
+  height: 66px !important;
+  margin: 0 auto 15px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 50% !important;
+
+  color: #10130f !important;
+  font-size: 28px !important;
+  font-weight: 950 !important;
+
+  background: var(--success-stage-color) !important;
+
+  box-shadow:
+    0 0 0 7px color-mix(in srgb, var(--success-stage-color) 10%, transparent),
+    0 0 42px color-mix(in srgb, var(--success-stage-color) 36%, transparent) !important;
+}
+
+.stage-success-kicker {
+  position: relative !important;
+  z-index: 2 !important;
+
+  color: var(--success-stage-color) !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: .18em !important;
+}
+
+.stage-success-range {
+  position: relative !important;
+  z-index: 2 !important;
+
+  margin-top: 7px !important;
+
+  color: rgba(255,255,255,.35) !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em !important;
+}
+
+.stage-success-modal h2 {
+  position: relative !important;
+  z-index: 2 !important;
+
+  margin: 7px 0 0 !important;
+
+  color: #fff !important;
+  font-size: 30px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+}
+
+.stage-success-modal p {
+  position: relative !important;
+  z-index: 2 !important;
+
+  margin: 12px auto 21px !important;
+
+  color: rgba(255,255,255,.48) !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  font-weight: 600 !important;
+}
+
+.stage-success-modal p strong {
+  color: var(--success-stage-color) !important;
+  font-weight: 900 !important;
+}
+
+.stage-success-actions {
+  position: relative !important;
+  z-index: 2 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.stage-success-actions button {
+  width: 100% !important;
+  min-height: 45px !important;
+  border-radius: 14px !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: .03em !important;
+}
+
+.stage-next-button {
+  border: 0 !important;
+  color: #0b0d12 !important;
+  background: var(--success-stage-color) !important;
+  box-shadow: 0 9px 28px color-mix(in srgb, var(--success-stage-color) 22%, transparent) !important;
+}
+
+.stage-all-button {
+  border: 1px solid rgba(255,255,255,.09) !important;
+  color: rgba(255,255,255,.72) !important;
+  background: rgba(255,255,255,.045) !important;
+}
+
+@keyframes stageSuccessAppear {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(.90);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 600px) {
+  .level-stage .stage-header.stage-toggle {
+    min-height: 76px !important;
+    padding: 12px 12px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+  }
+
+  .level-stage .stage-main {
+    gap: 9px !important;
+  }
+
+  .level-stage .stage-badge {
+    flex-basis: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 11px !important;
+    font-size: 13px !important;
+  }
+
+  .level-stage .stage-copy {
+    gap: 3px !important;
+  }
+
+  .level-stage .stage-copy strong {
+    font-size: 18px !important;
+  }
+
+  .level-stage .stage-eyebrow {
+    font-size: 7px !important;
+  }
+
+  .level-stage .stage-copy > span:last-child {
+    font-size: 8px !important;
+  }
+
+  .level-stage .stage-meta {
+    gap: 5px !important;
+  }
+
+  .level-stage .stage-meta > strong {
+    font-size: 10px !important;
+  }
+
+  .level-stage .stage-chevron {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 11px !important;
+  }
+
+  .level-stage .level-grid {
+    gap: 6px !important;
+  }
+
+  .game-screen .game-header > .coin-display {
+    min-width: 68px !important;
+    padding: 5px 8px 5px 6px !important;
+    gap: 5px !important;
+  }
+
+  .game-screen .game-header > .coin-display .coin-icon {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    flex-basis: 20px !important;
+  }
+
+  .game-screen .game-header > .coin-display > span:nth-child(2) {
+    font-size: 14px !important;
+    min-width: 15px !important;
+  }
+
+  .stage-success-modal {
+    width: calc(100vw - 28px) !important;
+    padding: 25px 18px 19px !important;
+  }
+
+  .stage-success-icon {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 26px !important;
+  }
+
+  .stage-success-modal h2 {
+    font-size: 27px !important;
+  }
+}
