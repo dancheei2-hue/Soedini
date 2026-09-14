@@ -12,18 +12,50 @@ const COLORS = [
   "#ff8fab",
 ];
 
+const STORAGE_KEY = "soedini-completed-levels";
+
 function App() {
+  const [screen, setScreen] = useState("levels");
   const [level, setLevel] = useState(0);
   const [connections, setConnections] = useState([]);
   const [activePath, setActivePath] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [hintCells, setHintCells] = useState([]);
-  const [showLevels, setShowLevels] = useState(false);
+  const [completedLevels, setCompletedLevels] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+
+      if (!saved) {
+        return [];
+      }
+
+      const parsed = JSON.parse(saved);
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed.filter(
+        (value) =>
+          Number.isInteger(value) &&
+          value >= 0 &&
+          value < LEVELS.length
+      );
+    } catch {
+      return [];
+    }
+  });
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const boardRef = useRef(null);
   const cellRefs = useRef({});
 
   const current = LEVELS[level];
+
+  if (!current) {
+    return null;
+  }
+
   const totalPairs = current.paths.length;
   const totalCells = current.size * current.size;
 
@@ -48,6 +80,7 @@ function App() {
 
   function getColor(cell) {
     const pairIndex = endpointToPair.get(cell);
+
     return COLORS[pairIndex % COLORS.length];
   }
 
@@ -65,7 +98,9 @@ function App() {
     const bc = b % current.size;
 
     return (
-      Math.abs(ar - br) + Math.abs(ac - bc) === 1
+      Math.abs(ar - br) +
+        Math.abs(ac - bc) ===
+      1
     );
   }
 
@@ -73,7 +108,9 @@ function App() {
     const board = boardRef.current;
     const element = cellRefs.current[cell];
 
-    if (!board || !element) return null;
+    if (!board || !element) {
+      return null;
+    }
 
     const boardRect =
       board.getBoundingClientRect();
@@ -110,23 +147,30 @@ function App() {
   }
 
   function startPath(cell) {
-    if (!isEndpoint(cell)) return;
+    if (!isEndpoint(cell)) {
+      return;
+    }
 
-    if (isOccupied(cell)) return;
+    if (isOccupied(cell)) {
+      return;
+    }
 
     setActivePath([cell]);
     setDragging(true);
   }
 
   function movePath(cell) {
-    if (!dragging || !activePath) return;
+    if (!dragging || !activePath) {
+      return;
+    }
 
     const last =
       activePath[activePath.length - 1];
 
-    if (cell === last) return;
+    if (cell === last) {
+      return;
+    }
 
-    // Движение назад.
     if (
       activePath.length > 1 &&
       cell ===
@@ -140,14 +184,14 @@ function App() {
       return;
     }
 
-    // Только соседняя клетка.
-    if (!areAdjacent(last, cell))
+    if (!areAdjacent(last, cell)) {
       return;
+    }
 
-    // Нельзя проходить через занятую клетку.
-    if (isOccupied(cell)) return;
+    if (isOccupied(cell)) {
+      return;
+    }
 
-    // Нельзя заходить в чужую точку.
     if (isEndpoint(cell)) {
       const pairIndex =
         endpointToPair.get(
@@ -162,9 +206,9 @@ function App() {
       }
     }
 
-    // Нельзя замыкать линию на себя.
-    if (activePath.includes(cell))
+    if (activePath.includes(cell)) {
       return;
+    }
 
     setActivePath([
       ...activePath,
@@ -173,7 +217,9 @@ function App() {
   }
 
   function moveFromPointer(event) {
-    if (!dragging) return;
+    if (!dragging) {
+      return;
+    }
 
     const element =
       document.elementFromPoint(
@@ -184,7 +230,9 @@ function App() {
     const cellElement =
       element?.closest(".cell");
 
-    if (!cellElement) return;
+    if (!cellElement) {
+      return;
+    }
 
     const cell = Number(
       cellElement.dataset.cell
@@ -196,8 +244,9 @@ function App() {
   }
 
   function finishPath(cell) {
-    if (!dragging || !activePath)
+    if (!dragging || !activePath) {
       return;
+    }
 
     const pairIndex =
       endpointToPair.get(
@@ -208,8 +257,8 @@ function App() {
       current.paths[pairIndex][0] ===
       activePath[0]
         ? current.paths[pairIndex][
-            current.paths[pairIndex]
-              .length - 1
+            current.paths[pairIndex].length -
+              1
           ]
         : current.paths[pairIndex][0];
 
@@ -217,8 +266,8 @@ function App() {
       cell === target &&
       activePath.length >= 2
     ) {
-      setConnections([
-        ...connections,
+      setConnections((previous) => [
+        ...previous,
         activePath,
       ]);
     }
@@ -241,9 +290,12 @@ function App() {
   }
 
   function handlePointerMove(event) {
-    if (!dragging) return;
+    if (!dragging) {
+      return;
+    }
 
     event.preventDefault();
+
     moveFromPointer(event);
   }
 
@@ -373,28 +425,71 @@ function App() {
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
+    setShowSuccess(false);
   }
 
-  function selectLevel(index) {
+  function openLevel(index) {
+    if (index > getHighestUnlockedLevel()) {
+      return;
+    }
+
     setLevel(index);
     setConnections([]);
     setActivePath(null);
     setDragging(false);
     setHintCells([]);
-    setShowLevels(false);
+    setShowSuccess(false);
+    setScreen("game");
+  }
+
+  function openLevels() {
+    setActivePath(null);
+    setDragging(false);
+    setShowSuccess(false);
+    setScreen("levels");
+  }
+
+  function getHighestUnlockedLevel() {
+    let highest = 0;
+
+    while (
+      completedLevels.includes(
+        highest
+      ) &&
+      highest + 1 < LEVELS.length
+    ) {
+      highest += 1;
+    }
+
+    return highest;
+  }
+
+  function isLevelUnlocked(index) {
+    return (
+      index <=
+      getHighestUnlockedLevel()
+    );
+  }
+
+  function isLevelCompleted(index) {
+    return completedLevels.includes(
+      index
+    );
   }
 
   function nextLevel() {
-    setLevel(
-      (previous) =>
-        (previous + 1) %
-        LEVELS.length
-    );
+    setShowSuccess(false);
 
-    setConnections([]);
-    setActivePath(null);
-    setDragging(false);
-    setHintCells([]);
+    if (level + 1 < LEVELS.length) {
+      setLevel(level + 1);
+      setConnections([]);
+      setActivePath(null);
+      setDragging(false);
+      setHintCells([]);
+      setScreen("game");
+    } else {
+      setScreen("levels");
+    }
   }
 
   const completed =
@@ -402,314 +497,505 @@ function App() {
       totalPairs &&
     usedCells === totalCells;
 
-  const progress = Math.round(
-    (usedCells / totalCells) *
-      100
+  const progress = Math.min(
+    100,
+    Math.round(
+      (usedCells / totalCells) *
+        100
+    )
   );
 
-  return (
-    <div className="app">
-      <header className="topbar">
-        <div>
-          <div className="logo">
-            СОЕДИНИ
+  useEffect(() => {
+    if (!completed) {
+      return;
+    }
+
+    setCompletedLevels(
+      (previous) => {
+        if (previous.includes(level)) {
+          return previous;
+        }
+
+        const next = [
+          ...previous,
+          level,
+        ].sort((a, b) => a - b);
+
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(next)
+          );
+        } catch {
+          // Прогресс останется в памяти
+        }
+
+        return next;
+      }
+    );
+
+    setShowSuccess(true);
+  }, [completed, level]);
+
+  function renderLevelsScreen() {
+    const completedCount =
+      completedLevels.length;
+
+    return (
+      <div className="app levels-screen">
+        <main className="levels-page">
+          <div className="levels-header">
+            <div className="brand">
+              СОЕДИНИ
+            </div>
+
+            <div className="levels-kicker">
+              ЛОГИЧЕСКАЯ ИГРА
+            </div>
+
+            <h1>
+              Выберите уровень
+            </h1>
+
+            <p>
+              Соединяйте одинаковые точки
+              и заполните всё поле.
+            </p>
           </div>
 
-          <div className="subtitle">
-            Проведи каждую линию от точки
-            до точки, заполнив все поле
+          <div className="levels-progress">
+            <div>
+              <span>
+                ПРОГРЕСС
+              </span>
+
+              <strong>
+                {completedCount} /{" "}
+                {LEVELS.length}
+              </strong>
+            </div>
+
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${
+                    LEVELS.length
+                      ? (completedCount /
+                          LEVELS.length) *
+                        100
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="level-selector">
-          <button
-            className="level-current"
-            onClick={() =>
-              setShowLevels(
-                (previous) =>
-                  !previous
-              )
-            }
-          >
-            УРОВЕНЬ{" "}
-            <strong>
-              {level + 1}
-            </strong>
+          <div className="level-grid">
+            {LEVELS.map(
+              (_, index) => {
+                const unlocked =
+                  isLevelUnlocked(
+                    index
+                  );
 
-            <span className="level-arrow">
-              {showLevels
-                ? "▲"
-                : "▼"}
+                const isCompleted =
+                  isLevelCompleted(
+                    index
+                  );
+
+                const isNext =
+                  unlocked &&
+                  !isCompleted &&
+                  index ===
+                    getHighestUnlockedLevel();
+
+                return (
+                  <button
+                    key={index}
+                    className={[
+                      "level-card",
+                      unlocked
+                        ? "unlocked"
+                        : "locked",
+                      isCompleted
+                        ? "completed"
+                        : "",
+                      isNext
+                        ? "next-level"
+                        : "",
+                    ].join(" ")}
+                    onClick={() =>
+                      openLevel(
+                        index
+                      )
+                    }
+                    disabled={
+                      !unlocked
+                    }
+                  >
+                    <span className="level-number">
+                      {index + 1}
+                    </span>
+
+                    {isCompleted ? (
+                      <span className="level-status completed-status">
+                        ✓
+                      </span>
+                    ) : unlocked ? (
+                      <span className="level-status play-status">
+                        →
+                      </span>
+                    ) : (
+                      <span className="level-status lock-status">
+                        ●
+                      </span>
+                    )}
+
+                    <span className="level-label">
+                      {isCompleted
+                        ? "Пройден"
+                        : unlocked
+                        ? "Играть"
+                        : "Закрыт"}
+                    </span>
+                  </button>
+                );
+              }
+            )}
+          </div>
+
+          <div className="levels-footer">
+            <span>
+              Новый уровень
+              открывается после
+              прохождения предыдущего
             </span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  function renderGameScreen() {
+    return (
+      <div className="app game-screen">
+        <header className="game-header">
+          <button
+            className="back-button"
+            onClick={openLevels}
+          >
+            ← Уровни
           </button>
 
-          {showLevels && (
-            <div className="levels-menu">
-              {LEVELS.map(
-                (_, index) => {
-                  const isCurrent =
-                    index === level;
+          <div className="game-title">
+            <div className="game-logo">
+              СОЕДИНИ
+            </div>
+
+            <div className="game-level">
+              УРОВЕНЬ{" "}
+              <strong>
+                {level + 1}
+              </strong>
+            </div>
+          </div>
+
+          <div className="game-progress">
+            {progress}%
+          </div>
+        </header>
+
+        <main className="game">
+          <div className="info">
+            <div className="stats">
+              <span>
+                Линии{" "}
+                <strong>
+                  {connections.length}
+                </strong>
+                /{totalPairs}
+              </span>
+
+              <span>
+                Поле{" "}
+                <strong>
+                  {progress}%
+                </strong>
+              </span>
+            </div>
+
+            <div className="controls">
+              <button
+                onClick={
+                  undoLastMove
+                }
+                disabled={
+                  connections.length ===
+                    0 ||
+                  dragging
+                }
+              >
+                ← Назад
+              </button>
+
+              <button
+                onClick={addHint}
+                disabled={dragging}
+              >
+                Подсказка
+              </button>
+
+              <button
+                onClick={resetLevel}
+              >
+                Заново
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={boardRef}
+            className="board"
+            style={{
+              gridTemplateColumns:
+                `repeat(${current.size}, 1fr)`,
+              gridTemplateRows:
+                `repeat(${current.size}, 1fr)`,
+            }}
+            onPointerMove={
+              handlePointerMove
+            }
+          >
+            <svg
+              className="lines"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              {connections.map(
+                (path, index) => {
+                  const pairIndex =
+                    endpointToPair.get(
+                      path[0]
+                    );
 
                   return (
-                    <button
-                      key={index}
-                      className={
-                        isCurrent
-                          ? "level-option current"
-                          : "level-option"
-                      }
-                      onClick={() =>
-                        selectLevel(
-                          index
-                        )
-                      }
-                    >
-                      <span>
-                        Уровень{" "}
-                        {index + 1}
-                      </span>
-
-                      {isCurrent && (
-                        <span className="check">
-                          ✓
-                        </span>
+                    <polyline
+                      key={`line-${index}`}
+                      points={pathPoints(
+                        path
                       )}
-                    </button>
+                      className="connection-line"
+                      stroke={
+                        COLORS[
+                          pairIndex %
+                            COLORS.length
+                        ]
+                      }
+                    />
                   );
                 }
               )}
+
+              {activePath && (
+                <polyline
+                  points={pathPoints(
+                    activePath
+                  )}
+                  className="connection-line active-line"
+                  stroke={getColor(
+                    activePath[0]
+                  )}
+                />
+              )}
+            </svg>
+
+            {Array.from({
+              length: totalCells,
+            }).map((_, index) => {
+              const endpoint =
+                isEndpoint(index);
+
+              const connected =
+                connections.some(
+                  (path) =>
+                    path.includes(
+                      index
+                    )
+                );
+
+              const active =
+                activePath?.includes(
+                  index
+                );
+
+              const color = endpoint
+                ? getColor(index)
+                : null;
+
+              const hint =
+                hintCells.find(
+                  (item) =>
+                    item.cell ===
+                    index
+                );
+
+              return (
+                <button
+                  key={index}
+                  ref={(element) => {
+                    if (element) {
+                      cellRefs.current[
+                        index
+                      ] = element;
+                    }
+                  }}
+                  data-cell={index}
+                  className={`cell ${
+                    endpoint
+                      ? "endpoint"
+                      : ""
+                  } ${
+                    connected
+                      ? "connected"
+                      : ""
+                  } ${
+                    active
+                      ? "active"
+                      : ""
+                  }`}
+                  onPointerDown={(
+                    event
+                  ) =>
+                    handlePointerDown(
+                      event,
+                      index
+                    )
+                  }
+                  onPointerUp={
+                    handlePointerUp
+                  }
+                  style={
+                    endpoint
+                      ? {
+                          "--dot-color":
+                            color,
+                        }
+                      : undefined
+                  }
+                  aria-label={`Клетка ${
+                    index + 1
+                  }`}
+                >
+                  {endpoint && (
+                    <span
+                      className="dot"
+                      style={{
+                        backgroundColor:
+                          color,
+                      }}
+                    />
+                  )}
+
+                  {hint && (
+                    <span
+                      className="hint-dot"
+                      style={{
+                        backgroundColor:
+                          COLORS[
+                            hint.pairIndex %
+                              COLORS.length
+                          ],
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {!showSuccess && (
+            <div className="hint">
+              Зажми цветную точку и
+              веди по клеткам
             </div>
           )}
-        </div>
-      </header>
+        </main>
 
-      <main className="game">
-        <div className="info">
-          <div className="stats">
-            <span>
-              Линии{" "}
-              <strong>
-                {connections.length}
-              </strong>
-              /{totalPairs}
-            </span>
+        {showSuccess && (
+          <div className="success-overlay">
+            <div className="confetti">
+              {Array.from({
+                length: 28,
+              }).map((_, index) => (
+                <span
+                  key={index}
+                  style={{
+                    "--i": index,
+                    "--delay": `${
+                      (index % 7) *
+                      0.08
+                    }s`,
+                  }}
+                />
+              ))}
+            </div>
 
-            <span>
-              Поле{" "}
-              <strong>
-                {progress}%
-              </strong>
-            </span>
+            <div className="success-modal">
+              <div className="success-icon">
+                ✓
+              </div>
+
+              <div className="success-kicker">
+                УРОВЕНЬ {level + 1}
+              </div>
+
+              <h2>
+                Ура!
+                <br />
+                Вы прошли уровень!
+              </h2>
+
+              <p>
+                Поле заполнено.
+                Все пары соединены.
+              </p>
+
+              <div className="success-actions">
+                {level + 1 <
+                  LEVELS.length && (
+                  <button
+                    className="success-next"
+                    onClick={
+                      nextLevel
+                    }
+                  >
+                    Следующий уровень
+                    <span>→</span>
+                  </button>
+                )}
+
+                <button
+                  className="success-levels"
+                  onClick={
+                    openLevels
+                  }
+                >
+                  Все уровни
+                </button>
+              </div>
+            </div>
           </div>
-
-          <div className="controls">
-            <button
-              onClick={undoLastMove}
-              disabled={
-                connections.length ===
-                  0 ||
-                dragging
-              }
-            >
-              ← Назад
-            </button>
-
-            <button
-              onClick={addHint}
-              disabled={dragging}
-            >
-              Подсказка
-            </button>
-
-            <button
-              onClick={resetLevel}
-            >
-              Заново
-            </button>
-          </div>
-        </div>
-
-        <div
-          ref={boardRef}
-          className="board"
-          style={{
-            gridTemplateColumns:
-              `repeat(${current.size}, 1fr)`,
-            gridTemplateRows:
-              `repeat(${current.size}, 1fr)`,
-          }}
-          onPointerMove={
-            handlePointerMove
-          }
-        >
-          <svg
-            className="lines"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-          >
-{connections.map(
-  (path, index) => {
-    const pairIndex =
-      endpointToPair.get(path[0]);
-
-    return (
-      <polyline
-        key={`line-${index}`}
-        points={pathPoints(path)}
-        className="connection-line"
-        stroke={
-          COLORS[
-            pairIndex % COLORS.length
-          ]
-        }
-      />
+        )}
+      </div>
     );
   }
-)}
 
-            {activePath && (
-              <polyline
-                points={pathPoints(
-                  activePath
-                )}
-                className="connection-line active-line"
-                stroke={getColor(
-                  activePath[0]
-                )}
-              />
-            )}
-          </svg>
+  if (screen === "levels") {
+    return renderLevelsScreen();
+  }
 
-          {Array.from({
-            length: totalCells,
-          }).map((_, index) => {
-            const endpoint =
-              isEndpoint(index);
-
-            const connected =
-              connections.some(
-                (path) =>
-                  path.includes(index)
-              );
-
-            const active =
-              activePath?.includes(
-                index
-              );
-
-            const color = endpoint
-              ? getColor(index)
-              : null;
-
-            const hint =
-              hintCells.find(
-                (item) =>
-                  item.cell === index
-              );
-
-            return (
-              <button
-                key={index}
-                ref={(element) => {
-                  if (element) {
-                    cellRefs.current[
-                      index
-                    ] = element;
-                  }
-                }}
-                data-cell={index}
-                className={`cell ${
-                  endpoint
-                    ? "endpoint"
-                    : ""
-                } ${
-                  connected
-                    ? "connected"
-                    : ""
-                } ${
-                  active
-                    ? "active"
-                    : ""
-                }`}
-                onPointerDown={(
-                  event
-                ) =>
-                  handlePointerDown(
-                    event,
-                    index
-                  )
-                }
-                onPointerUp={
-                  handlePointerUp
-                }
-                style={
-                  endpoint
-                    ? {
-                        "--dot-color":
-                          color,
-                      }
-                    : undefined
-                }
-                aria-label={`Клетка ${
-                  index + 1
-                }`}
-              >
-                {endpoint && (
-                  <span
-                    className="dot"
-                    style={{
-                      backgroundColor:
-                        color,
-                    }}
-                  />
-                )}
-
-                {hint && (
-                  <span
-                    className="hint-dot"
-                    style={{
-                      backgroundColor:
-                        COLORS[
-                          hint.pairIndex %
-                            COLORS.length
-                        ],
-                    }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {completed && (
-          <div className="success">
-            <div className="success-title">
-              Уровень пройден
-            </div>
-
-            <div className="success-text">
-              Поле заполнено. Все пары
-              соединены.
-            </div>
-
-            <button
-              className="next"
-              onClick={nextLevel}
-            >
-              Следующий уровень
-            </button>
-          </div>
-        )}
-
-        {!completed && (
-          <div className="hint">
-            Зажми цветную точку и веди
-            по клеткам
-          </div>
-        )}
-      </main>
-    </div>
-  );
+  return renderGameScreen();
 }
 
 export default App;
